@@ -70,7 +70,3 @@ def upload(name, file_path, file_name, description = '', tags=None):
 
     dynamodb_insert_into_table(name, item)
 
-# s3_create_bucket('final-test-123')
-# dynamodb_create_table('final-test-123', 'file_name')
-
-# upload('final-test-123', 'C:/Users/Svetozar/Desktop/download.png', 'download', 'opis')
