@@ -1,6 +1,8 @@
 from flask import Flask, jsonify, request
 from User import User
 from Validation import validate_email, validate_datetime, validate_length
+import jwt
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -48,6 +50,26 @@ def register():
     users.append(user)
 
     return jsonify({'message': 'User registered successfully!'})
+
+@app.route('/login', methods=['POST'])
+def login():
+    auth = request.authorization
+    
+    if not auth or not auth.username or not auth.password:
+        return jsonify({'message':'Cloud not vertify', 'WWWWW-Authenricate':'Basic auth="Login required"'}), 401
+
+    user = next((user for user in users if user.username == auth.username), None)
+    
+    if not user:
+        return jsonify({'message':'User not found', 'data':{}}), 401
+    
+    if user.password == auth.password:
+        token = jwt.encode({'username':user.username,'exp':datetime.utcnow() + timedelta(minutes=30)},
+                           app.config['SECRET_KEY'])
+        return jsonify({'token':token})
+    
+    return jsonify({'message':'Invalid credentials', 'data':{}}), 401
+
 
 if __name__ == '__main__':
     app.run(debug=True)
