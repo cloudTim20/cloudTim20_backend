@@ -1,8 +1,9 @@
 from flask import Flask, jsonify, request
-from User import User
+# from User import User
 from Validation import validate_email, validate_datetime, validate_length
 import jwt
 from datetime import datetime, timedelta
+import upload
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -10,15 +11,15 @@ users = []
 
 @app.route('/register', methods=['POST'])
 def register():
-    data = request.get_json()
+    user = request.get_json()
 
     #Lepimo podatke iz Json requesta
-    name = data['name']
-    surname = data['surname']
-    username = data['username']
-    birth_date = data['birth_date']
-    email = data['email']
-    password = data['password']
+    name = user['name']
+    surname = user['surname']
+    username = user['username']
+    birth_date = user['birth_date']
+    email = user['email']
+    password = user['password']
 
     #Validacija
     if not validate_datetime(birth_date):
@@ -42,12 +43,20 @@ def register():
     if not validate_length(password, 6, 50):
         return jsonify({'message': 'Invalid password length.'}), 400
 
-    if any(user.username == username for user in users):
+    # try:
+    #     upload.dynamodb_create_table('users', 'username')
+    # except Exception:
+    #     "Users table already exists!"
+
+    if upload.dynamodb_check_if_exists('users', 'username', username):
         return jsonify({'message': 'Username is already taken.'}), 400
 
+
+
     #Kreiramo novog usera i saljemo ga na server
-    user = User(name, surname, birth_date, username, email, password)
-    users.append(user)
+    # user = User(name, surname, birth_date, username, email, password)
+    # users.append(user)
+    upload.dynamodb_insert_into_table('users', user)
 
     return jsonify({'message': 'User registered successfully!'})
 
@@ -58,13 +67,23 @@ def login():
     if not auth or not auth.username or not auth.password:
         return jsonify({'message':'Cloud not vertify', 'WWWWW-Authenricate':'Basic auth="Login required"'}), 401
 
-    user = next((user for user in users if user.username == auth.username), None)
+    # user = next((user for user in users if user.username == auth.username), None)
     
-    if not user:
+    if not upload.dynamodb_check_if_exists('users', 'username', auth.username):
         return jsonify({'message':'User not found', 'data':{}}), 401
-    
-    if user.password == auth.password:
-        token = jwt.encode({'username':user.username,'exp':datetime.utcnow() + timedelta(minutes=30)},
+
+    primary_key = {
+        'username': {"S": auth.username}
+    }
+    response = upload.dynamodb_client.get_item(
+        TableName='users',
+        Key=primary_key
+    )
+
+    user = response['Item']
+
+    if user['password']['S'] == auth.password:
+        token = jwt.encode({'username':user['username']['S'],'exp':datetime.utcnow() + timedelta(minutes=30)},
                            app.config['SECRET_KEY'])
         return jsonify({'token':token})
     

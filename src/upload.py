@@ -70,7 +70,29 @@ def upload(name, file_path, file_name, description = '', tags=None):
 
     dynamodb_insert_into_table(name, item)
 
+def dynamodb_check_if_exists(table_name, key, value):
+    primary_key = {
+        key: {"S": value}
+    }
+    response = dynamodb_client.get_item(
+        TableName=table_name,
+        Key=primary_key
+    )
+
+    if "Item" in response:
+        return True  # Item exists
+    else:
+        return False  # Item does not exist
+
 # s3_create_bucket('final-test-123')
-# dynamodb_create_table('final-test-123', 'file_name')
+# dynamodb_create_table('users', 'username')
 
 # upload('final-test-123', 'C:/Users/Svetozar/Desktop/download.png', 'download', 'opis')
+
+# primary_key = {
+#     "file_name": {"S": "download"}
+# }
+# print(dynamodb_client.get_item(TableName='final-test-123',
+#     Key=primary_key))
+
+# print(dynamodb_check_if_exists('final-test-123', 'file_name', 'hhh'))
