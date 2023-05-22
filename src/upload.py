@@ -10,15 +10,15 @@ dynamodb_client = boto3.client('dynamodb')
 
 
 def s3_create_bucket(bucket_name):
-    s3_client.create_bucket(Bucket = bucket_name,
-                         CreateBucketConfiguration={'LocationConstraint': 'eu-central-1'})
+    s3_client.create_bucket(Bucket=bucket_name,
+                            CreateBucketConfiguration={'LocationConstraint': 'eu-central-1'})
 
 
 def s3_upload_file(file_path, bucket_name, file_name):
     s3_client.upload_file(file_path, bucket_name, file_name)
 
 
-def dynamodb_create_table(table_name, pk_name, sk_name = None):
+def dynamodb_create_table(table_name, pk_name, sk_name=None):
     attribute_definitions = [
         {
             'AttributeName': pk_name,
@@ -47,15 +47,16 @@ def dynamodb_create_table(table_name, pk_name, sk_name = None):
         'WriteCapacityUnits': 3
     }
 
-    dynamodb_client.create_table(TableName = table_name, AttributeDefinitions = attribute_definitions, KeySchema = key_schema, ProvisionedThroughput = provisioned_throughput)
+    dynamodb_client.create_table(TableName=table_name, AttributeDefinitions=attribute_definitions, KeySchema=key_schema,
+                                 ProvisionedThroughput=provisioned_throughput)
 
 
 def dynamodb_insert_into_table(table_name, item):
     item_json = json_util.dumps(item, as_dict=True)
-    dynamodb_client.put_item(TableName = table_name, Item = item_json)
+    dynamodb_client.put_item(TableName=table_name, Item=item_json)
 
 
-def upload(name, file_path, file_name, description = '', tags=None):
+def upload(name, file_path, file_name, description='', tags=None):
     if tags is None:
         tags = []
     s3_upload_file(file_path, name, file_name)
@@ -69,7 +70,8 @@ def upload(name, file_path, file_name, description = '', tags=None):
         'file_size': stat.st_size,
         'created_date': datetime.datetime.fromtimestamp(stat.st_ctime),
         'modified_date': datetime.datetime.fromtimestamp(stat.st_mtime),
-        'descrioption': description,
+        'added_date': datetime.datetime.now(),
+        'description': description,
         'tags': tags
     }
 
@@ -91,11 +93,44 @@ def dynamodb_check_if_exists(table_name, key, value):
         return False
 
 
+def get_from_dynamodb_table(table_name):
+    response = dynamodb_client.scan(
+        TableName=table_name,
+        FilterExpression='attribute_exists(added_date)',
+        ExpressionAttributeNames={
+            '#nm': 'file_name',
+            '#ty': 'file_type',
+            '#sz': 'file_size',
+            '#cd': 'created_date',
+            '#md': 'modified_date',
+            '#ad': 'added_date',
+            '#desc': 'description',
+            '#tags': 'tags'
+        },
+        ProjectionExpression='#nm, #ty, #sz, #cd, #md, #ad, #desc, #tags'
+    )
 
+    items = response['Items']
+    return items
+
+
+def get_from_s3_bucket(bucket_name):
+    response = s3_client.list_objects(Bucket=bucket_name)
+
+    if 'Contents' in response:
+        objects = response['Contents']
+        return objects
+    else:
+        return []
+
+
+# print(get_from_dynamodb_table("proba-123-321"))
+# print(get_from_s3_bucket('proba-123-321'))
 # s3_create_bucket('final-test-123')
 # dynamodb_create_table('users', 'username')
-
-# upload('final-test-123', 'C:/Users/Svetozar/Desktop/download.png', 'download', 'opis')
+# dynamodb_create_table('proba-123-321', 'file_name')
+# s3_create_bucket('proba-123-321')
+# upload('proba-123-321', 'C:/Users/Svetozar/Desktop/cloud_todo.txt', 'cloud_todo', 'opis')
 
 # primary_key = {
 #     "file_name": {"S": "download"}
