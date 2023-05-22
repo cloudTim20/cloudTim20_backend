@@ -70,7 +70,8 @@ def upload(name, file_path, file_name, description='', tags=None):
         'file_size': stat.st_size,
         'created_date': datetime.datetime.fromtimestamp(stat.st_ctime),
         'modified_date': datetime.datetime.fromtimestamp(stat.st_mtime),
-        'descrioption': description,
+        'added_date': datetime.datetime.now(),
+        'description': description,
         'tags': tags
     }
 
@@ -119,12 +120,45 @@ bucket_name = 'proba-123-321'
 item_key = 'cloud_todo'
 delete_file(bucket_name, item_key)
 
-# "user-" +
+def get_from_dynamodb_table(table_name):
+    response = dynamodb_client.scan(
+        TableName=table_name,
+        FilterExpression='attribute_exists(added_date)',
+        ExpressionAttributeNames={
+            '#nm': 'file_name',
+            '#ty': 'file_type',
+            '#sz': 'file_size',
+            '#cd': 'created_date',
+            '#md': 'modified_date',
+            '#ad': 'added_date',
+            '#desc': 'description',
+            '#tags': 'tags'
+        },
+        ProjectionExpression='#nm, #ty, #sz, #cd, #md, #ad, #desc, #tags'
+    )
 
+    items = response['Items']
+    return items
+
+
+def get_from_s3_bucket(bucket_name):
+    response = s3_client.list_objects(Bucket=bucket_name)
+
+    if 'Contents' in response:
+        objects = response['Contents']
+        return objects
+    else:
+        return []
+
+
+# print(get_from_dynamodb_table("proba-123-321"))
+# print(get_from_s3_bucket('proba-123-321'))
 # s3_create_bucket('final-test-123')
 # dynamodb_create_table('users', 'username')
-
 upload('user-andrea01', 'C:/Users/andre/OneDrive/Desktop/VSEM.txt', 'vsem', 'opissss')
+# dynamodb_create_table('proba-123-321', 'file_name')
+# s3_create_bucket('proba-123-321')
+# upload('proba-123-321', 'C:/Users/Svetozar/Desktop/cloud_todo.txt', 'cloud_todo', 'opis')
 
 # primary_key = {
 #     "file_name": {"S": "download"}
