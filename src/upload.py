@@ -75,7 +75,6 @@ def upload(name, file_path, file_name, description='', tags=None):
         'tags': tags
     }
 
-
     dynamodb_insert_into_table(name, item)
 
 
@@ -94,7 +93,7 @@ def dynamodb_check_if_exists(table_name, key, value):
         return False
 
 
-def delete_file(username, filename):
+def delete_file(username, filename):  # vrv treba da se promeni u celu putanju
     try:
         s3_client.delete_object(Bucket=username, Key=filename)
         print("File deleted successfully from s3.")
@@ -117,9 +116,17 @@ def delete_file(username, filename):
 
 
 # Example usage
-bucket_name = 'proba-123-321'
-item_key = 'cloud_todo'
-delete_file(bucket_name, item_key)
+# bucket_name = 'proba-123-321'
+# item_key = 'cloud_todo'
+# delete_file(bucket_name, item_key)
+
+
+def create_folder(username, folder_name):  # vrv treba da se promeni u celu putanju
+    s3_client.put_object(
+        Bucket=username,
+        Key=folder_name+'/'
+    )
+
 
 def get_from_dynamodb_table(table_name):
     response = dynamodb_client.scan(
@@ -156,7 +163,8 @@ def get_from_s3_bucket(bucket_name):
 # print(get_from_s3_bucket('proba-123-321'))
 # s3_create_bucket('final-test-123')
 # dynamodb_create_table('users', 'username')
-upload('user-andrea01', 'C:/Users/andre/OneDrive/Desktop/VSEM.txt', 'vsem', 'opissss')
+#upload('user-andrea01', 'C:/Users/andre/OneDrive/Desktop/VSEM.txt', 'vsem', 'opissss')
+create_folder("user-andrea01", "novi_folder")
 # dynamodb_create_table('proba-123-321', 'file_name')
 # s3_create_bucket('proba-123-321')
 # upload('proba-123-321', 'C:/Users/Svetozar/Desktop/cloud_todo.txt', 'cloud_todo', 'opis')
