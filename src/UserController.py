@@ -43,20 +43,13 @@ def register():
     if not validate_length(password, 6, 50):
         return jsonify({'message': 'Invalid password length.'}), 400
 
-    # try:
-    #     upload.dynamodb_create_table('users', 'username')
-    # except Exception:
-    #     "Users table already exists!"
-
     if upload.dynamodb_check_if_exists('users', 'username', username):
         return jsonify({'message': 'Username is already taken.'}), 400
 
-
-
-    #Kreiramo novog usera i saljemo ga na server
-    # user = User(name, surname, birth_date, username, email, password)
-    # users.append(user)
     upload.dynamodb_insert_into_table('users', user)
+
+    upload.s3_create_bucket("user-" + username)
+    upload.dynamodb_create_table("user-" + username, "file_name")
 
     return jsonify({'message': 'User registered successfully!'})
 
