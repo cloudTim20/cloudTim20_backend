@@ -75,6 +75,7 @@ def upload(name, file_path, file_name, description='', tags=None):
         'tags': tags
     }
 
+
     dynamodb_insert_into_table(name, item)
 
 
