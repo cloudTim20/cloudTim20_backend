@@ -16,6 +16,13 @@ def s3_create_bucket(bucket_name):
                             CreateBucketConfiguration={'LocationConstraint': 'eu-central-1'})
 
 
+def s3_delete_bucket(bucket_name):
+    try:
+        s3_client.delete_bucket(Bucket=bucket_name)
+        print(f"Bucket '{bucket_name}' deleted successfully.")
+    except Exception as e:
+        print(f"Error deleting bucket: {e}")
+
 def s3_upload_file(file_path, bucket_name, file_name):
     s3_client.upload_file(file_path, bucket_name, file_name)
 
@@ -202,3 +209,20 @@ def get_from_s3_bucket(bucket_name):
 #     Key=primary_key))
 
 # print(dynamodb_check_if_exists('final-test-123', 'file_name', 'hhh'))
+
+
+
+# Filip {
+
+# Kreiranje s3 bucketa
+# s3_create_bucket('filipkralj-test-123')
+
+# Brisanje s3 bucketa
+# s3_delete_bucket('filipkralj-test-123')
+
+
+
+
+# Kreiranje bucketa
+
+
