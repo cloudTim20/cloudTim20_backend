@@ -124,8 +124,32 @@ def delete_file(username, filename):  # vrv treba da se promeni u celu putanju
 def create_folder(username, folder_name):  # vrv treba da se promeni u celu putanju
     s3_client.put_object(
         Bucket=username,
-        Key=folder_name+'/'
+        Key=folder_name + '/'
     )
+    #kreirati i u dynamodb
+    #dodavanje obicnog fajla u dynamodb isto cela putanja
+    #premestanje fajlova u nove foldere
+    
+#create_folder('user-andrea01', 'prvi_folder')
+
+def delete_folder(username, folder_name):  # treba da se promeni u celu putanju, ako je folder u folderu
+
+    response = s3_client.list_objects_v2(
+        Bucket=username,
+        Prefix=folder_name + '/'
+    )
+    objects = response.get('Contents', [])
+    if objects:
+        delete_keys = {'Objects': [{'Key': obj['Key']} for obj in objects]}
+        s3_client.delete_objects(
+            Bucket=username,
+            Delete=delete_keys
+        )
+
+        delete_file(username, folder_name+'/')
+        #obrisati i sve fajlove iz tog foldera iz dynamodb
+
+#delete_folder('user-andrea01', 'prvi_folder')
 
 
 def get_from_dynamodb_table(table_name):
@@ -163,8 +187,8 @@ def get_from_s3_bucket(bucket_name):
 # print(get_from_s3_bucket('proba-123-321'))
 # s3_create_bucket('final-test-123')
 # dynamodb_create_table('users', 'username')
-#upload('user-andrea01', 'C:/Users/andre/OneDrive/Desktop/VSEM.txt', 'vsem', 'opissss')
-create_folder("user-andrea01", "novi_folder")
+# upload('user-andrea01', 'C:/Users/andre/OneDrive/Desktop/VSEM.txt', 'vsem', 'opissss')
+#create_folder("user-andrea01", "novi_folder")
 # dynamodb_create_table('proba-123-321', 'file_name')
 # s3_create_bucket('proba-123-321')
 # upload('proba-123-321', 'C:/Users/Svetozar/Desktop/cloud_todo.txt', 'cloud_todo', 'opis')
