@@ -9,7 +9,7 @@ s3_client = session.client('s3')
 s3_resource = session.resource('s3')
 
 dynamodb_client = session.client('dynamodb')
-
+dynamodb_resource = session.resource('dynamodb')
 
 def s3_create_bucket(bucket_name):
     s3_client.create_bucket(Bucket=bucket_name,
@@ -22,6 +22,7 @@ def s3_delete_bucket(bucket_name):
         print(f"Bucket '{bucket_name}' deleted successfully.")
     except Exception as e:
         print(f"Error deleting bucket: {e}")
+
 
 def s3_upload_file(file_path, bucket_name, file_name):
     s3_client.upload_file(file_path, bucket_name, file_name)
@@ -58,6 +59,14 @@ def dynamodb_create_table(table_name, pk_name, sk_name=None):
 
     dynamodb_client.create_table(TableName=table_name, AttributeDefinitions=attribute_definitions, KeySchema=key_schema,
                                  ProvisionedThroughput=provisioned_throughput)
+
+def dynamodb_delete_table(table_name):
+    try:
+        table = dynamodb_resource.Table(table_name)
+        table.delete()
+        print(f"Table '{table_name}' deleted successfully.")
+    except Exception as e:
+        print(f"Error deleting table: {e}")
 
 
 def dynamodb_insert_into_table(table_name, item):
@@ -135,6 +144,18 @@ def create_folder(username, folder_name):  # vrv treba da se promeni u celu puta
         Bucket=username,
         Key=folder_name + '/'
     )
+
+    pk_name = 'file_name'
+
+    item = {
+        pk_name: folder_name,
+        'file_type': 'folder',
+        'added_date': str(datetime.datetime.now()),
+        'description': 'Folder item',
+        'tags': []
+    }
+
+    dynamodb_insert_into_table(username, item)
     #kreirati i u dynamodb
     #dodavanje obicnog fajla u dynamodb isto cela putanja
     #premestanje fajlova u nove foldere
@@ -191,6 +212,35 @@ def get_from_s3_bucket(bucket_name):
     else:
         return []
 
+def s3_download_file(bucket_name, file_name, destination_path):
+    try:
+        s3_client.download_file(bucket_name, file_name, destination_path)
+        print(f"File '{file_name}' downloaded successfully.")
+    except Exception as e:
+        print(f"Error downloading file: {e}")
+
+
+def s3_download(bucket_name, key, destination_path):
+    s3_client = boto3.client('s3')
+    s3_resource = boto3.resource('s3')
+
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=key)
+
+    if 'Contents' in response:
+        s3_client.download_file(bucket_name, key, destination_path)
+        print(f"File '{key}' downloaded successfully.")
+    else:
+        objects = s3_resource.Bucket(bucket_name).objects.filter(Prefix=key)
+
+        for obj in objects:
+            if obj.key[-1] == '/':
+                os.makedirs(os.path.join(destination_path, obj.key), exist_ok=True)
+            else:
+                file_key = obj.key[len(key):]  # Remove the prefix to maintain the folder structure
+                local_path = os.path.join(destination_path, file_key)
+                s3_client.download_file(bucket_name, obj.key, local_path)
+
+        print(f"Folder '{key}' downloaded successfully.")
 
 # print(get_from_dynamodb_table("proba-123-321"))
 # print(get_from_s3_bucket('proba-123-321'))
@@ -212,17 +262,50 @@ def get_from_s3_bucket(bucket_name):
 
 
 
+# <------------ NE DIRAJ ------------>
+
+data = {
+    'username': 'VuksanFilip',
+    'email': 'vuksanfilip@example.com',
+    'password': 'password123',
+}
+
 # Filip {
 
+# Kreiraje dynamodb tabele
+# dynamodb_create_table('vuksan-test', 'file_name')
+
+# Dodavanje podataka u dynamodb tabelu
+# dynamodb_insert_into_table('vuksan-test', data)
+
+# Dobavljanje podataka iz dynamodb tabele
+# print(get_from_dynamodb_table('vuksan-test'))
+
+# Brisanje dynamodb tabele
+# dynamodb_delete_table('vuksan-test')
+
 # Kreiranje s3 bucketa
-# s3_create_bucket('filipkralj-test-123')
+# s3_create_bucket('vuksan-test')
+
+# Dodavanje foldera u s3 bucket
+# create_folder('filipkralj-test-123', 'folder2')
+
+# Brisanje foldera iz s3 bucketa
+# delete_folder('vuksan-test', 'folder1')
+
+# Dobavljanje podataka iz s3 bucketa
+# print(get_from_s3_bucket('vuksan-test'))
+
+# Dodavanje fajla u s3 bucket
+# upload('vuksan-test', 'C:/Users/filip/Desktop/LOOL.txt', 'folder1/LOOL')
+
+# Brisanje fajla iz s3 bucketa
+# delete_file('vuksan-test', "LOOL")
 
 # Brisanje s3 bucketa
-# s3_delete_bucket('filipkralj-test-123')
+# s3_delete_bucket('vuksan-test')
 
+# Preuzimanje sadrzaja
+s3_download('filipkralj-test-123', 'folder2', 'C:/Users/filip/Desktop/folder2')
 
-
-
-# Kreiranje bucketa
-
-
+# }
