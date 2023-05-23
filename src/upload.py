@@ -3,10 +3,12 @@ from dynamodb_json import json_util
 import os
 import datetime
 
-s3_client = boto3.client('s3')
-s3_resource = boto3.resource('s3')
+session = boto3.Session(region_name='eu-central-1')
 
-dynamodb_client = boto3.client('dynamodb')
+s3_client = session.client('s3')
+s3_resource = session.resource('s3')
+
+dynamodb_client = session.client('dynamodb')
 
 
 def s3_create_bucket(bucket_name):
@@ -186,7 +188,7 @@ def get_from_s3_bucket(bucket_name):
 # print(get_from_dynamodb_table("proba-123-321"))
 # print(get_from_s3_bucket('proba-123-321'))
 # s3_create_bucket('final-test-123')
-# dynamodb_create_table('users', 'username')
+# dynamodb_create_table('usersssss', 'username')
 # upload('user-andrea01', 'C:/Users/andre/OneDrive/Desktop/VSEM.txt', 'vsem', 'opissss')
 #create_folder("user-andrea01", "novi_folder")
 # dynamodb_create_table('proba-123-321', 'file_name')
