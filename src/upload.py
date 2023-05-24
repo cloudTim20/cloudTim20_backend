@@ -265,6 +265,65 @@ def update_item_attribute(table_name, partition_key, attribute_name, new_value):
         ExpressionAttributeValues=expression_attribute_values
     )
 
+
+def get_content_from_database(table_name, content_id):
+
+    try:
+        table = dynamodb_resource.Table(table_name)
+
+        response = table.get_item(Key={'file_name': content_id})
+
+        content_item = response.get('Item')
+        if content_item:
+            return content_item
+
+    except Exception as e:
+        print(f"Error retrieving content from DynamoDB: {e}")
+
+    return None
+
+
+def get_user_from_database(username):
+
+    table_name = 'users'
+
+    try:
+        table = dynamodb_resource.Table(table_name)
+
+        response = table.get_item(Key={'username': username})
+
+        user_item = response.get('Item')
+        if user_item:
+            return user_item
+
+    except Exception as e:
+        print(f"Error retrieving user from DynamoDB: {e}")
+
+    return None
+
+
+def user_exists(username):
+    user = get_user_from_database(username)
+    return user is not None
+
+
+def grant_read_permission(table, content_id, recipient):
+    content = get_content_from_database(table, content_id)
+    if content:
+        if 'read_permission' not in content:
+            content['read_permission'] = []
+        if recipient in content['read_permission']:
+            raise Exception(recipient + " already have permission")
+
+    content['read_permission'].append(recipient)
+    print(content)
+    table = dynamodb_resource.Table(table)
+    response = table.update_item(
+        Key={'file_name': content_id},
+        UpdateExpression='SET read_permission = :read_permission',
+        ExpressionAttributeValues={':read_permission': content['read_permission']}
+    )
+
 # update_item_attribute('user-andrea01', 'vsem222', 'description', 'novi opis')
 # print(get_from_dynamodb_table("proba-123-321"))
 # print(get_from_s3_bucket('proba-123-321'))
@@ -334,4 +393,12 @@ def update_item_attribute(table_name, partition_key, attribute_name, new_value):
 # Preuzimanje sadrzaja
 # s3_download_file('filipkralj-test-123', 'LOOL', 'C:/Users/filip/Desktop/LOOL')
 
+# Dobavljanje korisnika iz tabele
+# print(get_user_from_database('andrea01'))
+
+# Dobavljanje sadrzaja iz tabele
+# print(get_content_from_database('filipkralj-test-123', 'LOOL'))
+
+# Dodavanje read only za odredjeni sazdrzaj za odredjenog korisnika
+# grant_read_permission('filipkralj-test-123', 'LOOL', 'andrea01')
 # }

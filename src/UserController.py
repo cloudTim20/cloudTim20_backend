@@ -274,5 +274,31 @@ def update_metadata():
         return jsonify({'message': 'An error occurred', 'error': str(e)}), 500
 
 
+@app.route('/share', methods=['PUT'])
+@token_required
+def share_content():
+
+    user = g.current_user
+    data = request.get_json()
+    content_key = data['content']
+    username = data['username']
+    table = 'user-' + user
+
+    if(user == username):
+        return jsonify({'message': 'Content for your self is already shared'}), 400
+
+    if not user_exists(username):
+        return jsonify({'message': 'Recipient user does not exist.'}), 400
+
+    content = get_content_from_database(table, content_key)
+    if not content:
+        return jsonify({'message': 'Content not found.'}), 404
+
+    try:
+        grant_read_permission(table, content_key, username)
+        return jsonify({'message': 'Content shared successfully! to ' + username})
+    except Exception as e:
+        return jsonify({'message': str(e)}), 400
+
 if __name__ == '__main__':
     app.run(debug=True)
