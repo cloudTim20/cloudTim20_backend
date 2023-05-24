@@ -307,22 +307,36 @@ def user_exists(username):
     return user is not None
 
 
-def grant_read_permission(table, content_id, recipient):
+def grant_read_permission(table, content_id, username):
+
     content = get_content_from_database(table, content_id)
     if content:
         if 'read_permission' not in content:
             content['read_permission'] = []
-        if recipient in content['read_permission']:
-            raise Exception(recipient + " already have permission")
+        if username in content['read_permission']:
+            raise Exception(username + " already have permission")
 
-    content['read_permission'].append(recipient)
-    print(content)
+    content['read_permission'].append(username)
     table = dynamodb_resource.Table(table)
     response = table.update_item(
         Key={'file_name': content_id},
         UpdateExpression='SET read_permission = :read_permission',
         ExpressionAttributeValues={':read_permission': content['read_permission']}
     )
+
+def remove_permission(table, content_id, username):
+
+    content = get_content_from_database(table, content_id)
+    if 'read_permission' in content and username in content['read_permission']:
+        content['read_permission'].remove(username)
+        table = dynamodb_resource.Table(table)
+        response = table.update_item(
+            Key={'file_name': content_id},
+            UpdateExpression='SET read_permission = :read_permission',
+            ExpressionAttributeValues={':read_permission': content['read_permission']}
+        )
+    else:
+        raise Exception("Permission for this user does not exist")
 
 # update_item_attribute('user-andrea01', 'vsem222', 'description', 'novi opis')
 # print(get_from_dynamodb_table("proba-123-321"))
