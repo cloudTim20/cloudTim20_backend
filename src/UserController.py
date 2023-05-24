@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request
 from Validation import validate_email, validate_datetime, validate_length
 import jwt
 from datetime import datetime, timedelta
-from upload import dynamodb_check_if_exists, dynamodb_client, upload
+from upload import *
 from functools import wraps
 from jwt.exceptions import DecodeError
 
@@ -45,13 +45,13 @@ def register():
     if not validate_length(password, 6, 50):
         return jsonify({'message': 'Invalid password length.'}), 400
 
-    if upload.dynamodb_check_if_exists('users', 'username', username):
+    if dynamodb_check_if_exists('users', 'username', username):
         return jsonify({'message': 'Username is already taken.'}), 400
 
-    upload.dynamodb_insert_into_table('users', user)
+    dynamodb_insert_into_table('users', user)
 
-    upload.s3_create_bucket("user-" + username)
-    upload.dynamodb_create_table("user-" + username, "file_name")
+    s3_create_bucket("user-" + username)
+    dynamodb_create_table("user-" + username, "file_name")
 
     return jsonify({'message': 'User registered successfully!'})
 
