@@ -4,6 +4,7 @@ from Validation import validate_email, validate_datetime, validate_length
 import jwt
 from datetime import datetime, timedelta
 from upload import *
+from datetime import datetime, timedelta
 from functools import wraps
 from jwt.exceptions import DecodeError
 
@@ -50,10 +51,11 @@ def register():
 
     dynamodb_insert_into_table('users', user)
 
-    s3_create_bucket("user-" + username)
-    dynamodb_create_table("user-" + username, "file_name")
+    s3_create_bucket("user-" + username + "-0")
+    dynamodb_create_table("user-" + username + "-0", "file_name")
 
     return jsonify({'message': 'User registered successfully!'})
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -140,6 +142,20 @@ def get_data():
         return jsonify({'message': 'Error occurred while getting data.', 'error': str(e)}), 500
 
 
+@app.route('/modify', methods=['PUT'])
+@token_required
+def modify_data():
+
+    user = request.current_user
+
+    try:
+        data = get_from_s3_bucket('user-' + user)
+        return data
+
+    except Exception as e:
+        return jsonify({'message': 'Error occurred while getting data.', 'error': str(e)}), 500
+
+
 @app.route('/delete', methods=['DELETE'])
 @token_required
 def delete_data():
@@ -147,14 +163,20 @@ def delete_data():
     user = request.current_user
     json_data = request.get_json()
     file = json_data['file']
+    album = json_data['album']
+
+    username = album.split("-")
+    if(username[1] != user):
+        return jsonify({'message': 'You can only delete your own data!'})
 
     try:
-        delete_file('user-' + user, file)
+        delete_file(album, file)
         return jsonify({'message': 'File deleted successfully!'})
     except FileNotFoundError as e:
         return jsonify({'message': 'File not found.', 'error': str(e)}), 404
     except Exception as e:
         return jsonify({'message': 'Error occurred while deleting file.', 'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
