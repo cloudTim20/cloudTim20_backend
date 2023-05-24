@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request
 from Validation import validate_email, validate_datetime, validate_length
 import jwt
 from datetime import datetime, timedelta
-from upload import dynamodb_check_if_exists, dynamodb_client, upload
+from upload import dynamodb_check_if_exists, dynamodb_client, upload, get_from_s3_bucket, delete_file
 from functools import wraps
 from jwt.exceptions import DecodeError
 
@@ -84,6 +84,7 @@ def login():
     
     return jsonify({'message':'Invalid credentials', 'data':{}}), 401
 
+
 def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -123,6 +124,37 @@ def upload_data():
 
     except Exception as e:
         return jsonify({'message': 'Error occurred while uploading file.', 'error': str(e)}), 500
+
+
+@app.route('/get', methods=['GET'])
+@token_required
+def get_data():
+
+    user = request.current_user
+
+    try:
+        data = get_from_s3_bucket('user-' + user)
+        return data
+
+    except Exception as e:
+        return jsonify({'message': 'Error occurred while getting data.', 'error': str(e)}), 500
+
+
+@app.route('/delete', methods=['DELETE'])
+@token_required
+def delete_data():
+
+    user = request.current_user
+    json_data = request.get_json()
+    file = json_data['file']
+
+    try:
+        delete_file('user-' + user, file)
+        return jsonify({'message': 'File deleted successfully!'})
+    except FileNotFoundError as e:
+        return jsonify({'message': 'File not found.', 'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'message': 'Error occurred while deleting file.', 'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
