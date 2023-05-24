@@ -197,5 +197,25 @@ def delete_a_folder():
         return jsonify({'message': 'An error occurred', 'error': str(e)}), 500
 
 
+@app.route('/download', methods=['GET'])
+@token_required
+def download_file():
+
+    user = g.current_user
+    json_data = request.get_json()
+    file_name = json_data['file_name']
+    destination_path = json_data['destination_path']
+
+    try:
+        s3_download_file('user-' + user, file_name, destination_path)
+        return jsonify({'message': 'File downloaded successfully!'})
+    except botocore.exceptions.ClientError as e:
+        error_code = e.response['Error']['Code']
+        error_message = e.response['Error']['Message']
+        return jsonify({'message': 'AWS error', 'error_code': error_code, 'error_message': error_message}), 500
+    except Exception as e:
+        return jsonify({'message': 'An error occurred', 'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True)
