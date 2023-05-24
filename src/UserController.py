@@ -83,7 +83,6 @@ def login():
     return jsonify({'message': 'Invalid credentials', 'data': {}}), 401
 
 
-
 def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -128,16 +127,16 @@ def upload_data():
         return jsonify({'message': 'Error occurred while uploading file.', 'error': str(e)}), 500
 
 
-
 @app.route('/get', methods=['GET'])
 @token_required
 def get_data():
 
-    user = request.current_user
+    user = g.current_user
 
     try:
-        data = get_from_s3_bucket('user-' + user)
-        return data
+        # data_s3 = get_from_s3_bucket('user-' + user)
+        data_dynamodb = get_from_dynamodb_table('user-' + user)
+        return data_dynamodb
 
     except Exception as e:
         return jsonify({'message': 'Error occurred while getting data.', 'error': str(e)}), 500
@@ -147,7 +146,7 @@ def get_data():
 @token_required
 def delete_data():
 
-    user = request.current_user
+    user = g.current_user
     json_data = request.get_json()
     file = json_data['file']
 

@@ -3,6 +3,8 @@ from dynamodb_json import json_util
 import os
 import datetime
 import botocore
+import botocore.exceptions
+
 
 session = boto3.Session(region_name='eu-central-1')
 
