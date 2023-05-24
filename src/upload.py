@@ -3,6 +3,8 @@ from dynamodb_json import json_util
 import os
 import datetime
 import botocore
+import botocore.exceptions
+
 
 session = boto3.Session(region_name='eu-central-1')
 
@@ -11,6 +13,7 @@ s3_resource = session.resource('s3')
 
 dynamodb_client = session.client('dynamodb')
 dynamodb_resource = session.resource('dynamodb')
+
 
 def s3_create_bucket(bucket_name):
     s3_client.create_bucket(Bucket=bucket_name,
@@ -43,7 +46,7 @@ def dynamodb_create_table(table_name, pk_name, sk_name=None):
         }
     ]
 
-    if sk_name != None:
+    if sk_name is not None:
         attribute_definitions.append({
             'AttributeName': sk_name,
             'AttributeType': 'S',
@@ -60,6 +63,7 @@ def dynamodb_create_table(table_name, pk_name, sk_name=None):
 
     dynamodb_client.create_table(TableName=table_name, AttributeDefinitions=attribute_definitions, KeySchema=key_schema,
                                  ProvisionedThroughput=provisioned_throughput)
+
 
 def dynamodb_delete_table(table_name):
     try:
@@ -140,12 +144,6 @@ def delete_file(username, filename):
     print("File and item deleted successfully.")
 
 
-# Example usage
-# bucket_name = 'proba-123-321'
-# item_key = 'cloud_todo'
-# delete_file(bucket_name, item_key)
-
-
 def create_folder(username, folder_name):  # vrv treba da se promeni u celu putanju
     s3_client.put_object(
         Bucket=username,
@@ -163,11 +161,7 @@ def create_folder(username, folder_name):  # vrv treba da se promeni u celu puta
     }
 
     dynamodb_insert_into_table(username, item)
-    #kreirati i u dynamodb
-    #dodavanje obicnog fajla u dynamodb isto cela putanja
-    #premestanje fajlova u nove foldere
-    
-#create_folder('user-andrea01', 'prvi_folder')
+
 
 def delete_folder(username, folder_name):  # treba da se promeni u celu putanju, ako je folder u folderu
 
@@ -184,9 +178,6 @@ def delete_folder(username, folder_name):  # treba da se promeni u celu putanju,
         )
 
         delete_file(username, folder_name+'/')
-        #obrisati i sve fajlove iz tog foldera iz dynamodb
-
-#delete_folder('user-andrea01', 'prvi_folder')
 
 
 def get_from_dynamodb_table(table_name):
@@ -219,6 +210,7 @@ def get_from_s3_bucket(bucket_name):
     else:
         return []
 
+
 def s3_download_file(bucket_name, file_name, destination_path):
     try:
         s3_client.download_file(bucket_name, file_name, destination_path)
@@ -226,12 +218,60 @@ def s3_download_file(bucket_name, file_name, destination_path):
     except Exception as e:
         print(f"Error downloading file: {e}")
 
+
+def rename_file(name, old_name, new_name):
+
+    s3_client.copy_object(
+        Bucket=name,
+        CopySource={'Bucket': name, 'Key': old_name},
+        Key=new_name
+    )
+
+    s3_client.delete_object(
+        Bucket=name,
+        Key=old_name
+    )
+
+    response = dynamodb_client.get_item(
+        TableName=name,
+        Key={'file_name': {'S': old_name}}
+    )
+    item = response['Item']
+
+    dynamodb_client.delete_item(
+        TableName=name,
+        Key={'file_name': {'S': old_name}}
+    )
+
+    item['file_name'] = {'S': new_name}
+    dynamodb_client.put_item(
+        TableName=name,
+        Item=item
+    )
+
+
+def update_item_attribute(table_name, partition_key, attribute_name, new_value):
+    update_expression = "SET " + attribute_name + " = :value"
+    expression_attribute_values = {
+        ":value": {'S': new_value}
+    }
+
+    dynamodb_client.update_item(
+        TableName=table_name,
+        Key={
+            'file_name': {'S': partition_key}
+        },
+        UpdateExpression=update_expression,
+        ExpressionAttributeValues=expression_attribute_values
+    )
+
+# update_item_attribute('user-andrea01', 'vsem222', 'description', 'novi opis')
 # print(get_from_dynamodb_table("proba-123-321"))
 # print(get_from_s3_bucket('proba-123-321'))
 # s3_create_bucket('final-test-123')
 # dynamodb_create_table('usersssss', 'username')
 # upload('user-andrea01', 'C:/Users/andre/OneDrive/Desktop/VSEM.txt', 'vsem', 'opissss')
-#create_folder("user-andrea01", "novi_folder")
+# create_folder("user-andrea01", "novi_folder")
 # dynamodb_create_table('proba-123-321', 'file_name')
 # s3_create_bucket('proba-123-321')
 # upload('proba-123-321', 'C:/Users/Svetozar/Desktop/cloud_todo.txt', 'cloud_todo', 'opis')
@@ -248,11 +288,11 @@ def s3_download_file(bucket_name, file_name, destination_path):
 
 # <------------ NE DIRAJ ------------>
 
-data = {
-    'username': 'VuksanFilip',
-    'email': 'vuksanfilip@example.com',
-    'password': 'password123',
-}
+# data = {
+#     'username': 'VuksanFilip',
+#     'email': 'vuksanfilip@example.com',
+#     'password': 'password123',
+# }
 
 # Filip {
 

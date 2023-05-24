@@ -1,5 +1,4 @@
-from flask import Flask, jsonify, request
-# from User import User
+from flask import Flask, jsonify, request, g
 from Validation import validate_email, validate_datetime, validate_length
 import jwt
 from datetime import datetime, timedelta
@@ -7,16 +6,17 @@ from upload import *
 from datetime import datetime, timedelta
 from functools import wraps
 from jwt.exceptions import DecodeError
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
-users = []
+
 
 @app.route('/register', methods=['POST'])
 def register():
     user = request.get_json()
 
-    #Lepimo podatke iz Json requesta
+    # Lepimo podatke iz Json requesta
     name = user['name']
     surname = user['surname']
     username = user['username']
@@ -24,7 +24,7 @@ def register():
     email = user['email']
     password = user['password']
 
-    #Validacija
+    # Validacija
     if not validate_datetime(birth_date):
         return jsonify({'message': 'Invalid datetime format for birth_date.'}), 400
 
@@ -51,8 +51,8 @@ def register():
 
     dynamodb_insert_into_table('users', user)
 
-    s3_create_bucket("user-" + username + "-0")
-    dynamodb_create_table("user-" + username + "-0", "file_name")
+    s3_create_bucket("user-" + username)
+    dynamodb_create_table("user-" + username, "file_name")
 
     return jsonify({'message': 'User registered successfully!'})
 
@@ -60,14 +60,12 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     auth = request.authorization
-    
-    if not auth or not auth.username or not auth.password:
-        return jsonify({'message':'Cloud not vertify', 'WWWWW-Authenricate':'Basic auth="Login required"'}), 401
 
-    # user = next((user for user in users if user.username == auth.username), None)
-    
+    if not auth or not auth.username or not auth.password:
+        return jsonify({'message': 'Cloud not verify', 'WWW-Authenticate': 'Basic auth="Login required"'}), 401
+
     if not dynamodb_check_if_exists('users', 'username', auth.username):
-        return jsonify({'message':'User not found', 'data':{}}), 401
+        return jsonify({'message': 'User not found', 'data': {}}), 401
 
     primary_key = {
         'username': {"S": auth.username}
@@ -80,11 +78,11 @@ def login():
     user = response['Item']
 
     if user['password']['S'] == auth.password:
-        token = jwt.encode({'username':user['username']['S'],'exp':datetime.utcnow() + timedelta(minutes=30)},
+        token = jwt.encode({'username': user['username']['S'], 'exp': datetime.utcnow() + timedelta(minutes=30)},
                            app.config['SECRET_KEY'])
-        return jsonify({'token':token})
-    
-    return jsonify({'message':'Invalid credentials', 'data':{}}), 401
+        return jsonify({'token': token})
+
+    return jsonify({'message': 'Invalid credentials', 'data': {}}), 401
 
 
 def token_required(f):
@@ -99,7 +97,7 @@ def token_required(f):
 
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            request.current_user = data['username']
+            g.current_user = data['username']
         except DecodeError:
             return jsonify({'message': 'Invalid token!'}), 401
 
@@ -112,16 +110,19 @@ def token_required(f):
 @token_required
 def upload_data():
 
-    user = request.current_user
+    user = g.current_user
     json_data = request.get_json()
 
-    name = json_data['name']
-    file_path = json_data['file']
+    file_path = json_data['file_path']
+    file_name = json_data['file_name']
     description = json_data['description']
     tags = json_data['tags']
 
     try:
-        upload(name, file_path, description, tags)
+        if not tags:
+            upload('user-' + user, file_path, file_name, description)
+        else:
+            upload(user, file_path, file_name, description, tags)
         return jsonify({'message': 'File uploaded successfully!'})
 
     except Exception as e:
@@ -132,11 +133,12 @@ def upload_data():
 @token_required
 def get_data():
 
-    user = request.current_user
+    user = g.current_user
 
     try:
-        data = get_from_s3_bucket('user-' + user)
-        return data
+        # data_s3 = get_from_s3_bucket('user-' + user)
+        data_dynamodb = get_from_dynamodb_table('user-' + user)
+        return data_dynamodb
 
     except Exception as e:
         return jsonify({'message': 'Error occurred while getting data.', 'error': str(e)}), 500
@@ -160,22 +162,116 @@ def modify_data():
 @token_required
 def delete_data():
 
-    user = request.current_user
+    user = g.current_user
     json_data = request.get_json()
     file = json_data['file']
-    album = json_data['album']
-
-    username = album.split("-")
-    if(username[1] != user):
-        return jsonify({'message': 'You can only delete your own data!'})
 
     try:
-        delete_file(album, file)
+        delete_file("user-" + user, file)
         return jsonify({'message': 'File deleted successfully!'})
     except FileNotFoundError as e:
         return jsonify({'message': 'File not found.', 'error': str(e)}), 404
     except Exception as e:
         return jsonify({'message': 'Error occurred while deleting file.', 'error': str(e)}), 500
+
+
+@app.route('/create-folder', methods=['POST'])
+@token_required
+def new_folder():
+
+    user = g.current_user
+    json_data = request.get_json()
+    folder_name = json_data['folder_name']
+
+    try:
+        create_folder('user-' + user, folder_name)
+        return jsonify({'message': 'Folder created successfully!'})
+    except botocore.exceptions.ClientError as e:
+        error_code = e.response['Error']['Code']
+        error_message = e.response['Error']['Message']
+        return jsonify({'message': 'AWS error', 'error_code': error_code, 'error_message': error_message}), 500
+    except Exception as e:
+        return jsonify({'message': 'An error occurred', 'error': str(e)}), 500
+
+
+@app.route('/delete-folder', methods=['DELETE'])
+@token_required
+def delete_a_folder():
+
+    user = g.current_user
+    json_data = request.get_json()
+    folder_name = json_data['folder_name']
+
+    try:
+        delete_folder('user-' + user, folder_name)
+        return jsonify({'message': 'Folder deleted successfully!'})
+    except botocore.exceptions.ClientError as e:
+        error_code = e.response['Error']['Code']
+        error_message = e.response['Error']['Message']
+        return jsonify({'message': 'AWS error', 'error_code': error_code, 'error_message': error_message}), 500
+    except Exception as e:
+        return jsonify({'message': 'An error occurred', 'error': str(e)}), 500
+
+
+@app.route('/download', methods=['GET'])
+@token_required
+def download_file():
+
+    user = g.current_user
+    json_data = request.get_json()
+    file_name = json_data['file_name']
+    destination_path = json_data['destination_path']
+
+    try:
+        s3_download_file('user-' + user, file_name, destination_path)
+        return jsonify({'message': 'File downloaded successfully!'})
+    except botocore.exceptions.ClientError as e:
+        error_code = e.response['Error']['Code']
+        error_message = e.response['Error']['Message']
+        return jsonify({'message': 'AWS error', 'error_code': error_code, 'error_message': error_message}), 500
+    except Exception as e:
+        return jsonify({'message': 'An error occurred', 'error': str(e)}), 500
+
+
+@app.route('/rename-file', methods=['PUT'])
+@token_required
+def rename():
+
+    user = g.current_user
+    json_data = request.get_json()
+    old_file_name = json_data['old_file_name']
+    new_file_name = json_data['new_file_name']
+
+    try:
+        rename_file('user-' + user, old_file_name, new_file_name)
+        return jsonify({'message': 'File renamed successfully!'})
+    except botocore.exceptions.ClientError as e:
+        error_code = e.response['Error']['Code']
+        error_message = e.response['Error']['Message']
+        return jsonify({'message': 'AWS error', 'error_code': error_code, 'error_message': error_message}), 500
+    except Exception as e:
+        return jsonify({'message': 'An error occurred', 'error': str(e)}), 500
+
+
+@app.route('/update-metadata', methods=['PUT'])
+@token_required
+def update_metadata():
+
+    user = g.current_user
+    json_data = request.get_json()
+    file_name = json_data['file_name']
+    attribute = json_data['attribute']
+    value = json_data['value']
+
+    try:
+        update_item_attribute('user-' + user, file_name, attribute, value)
+        return jsonify({'message': "File's metadata updated successfully!"})
+    except botocore.exceptions.ClientError as e:
+        error_code = e.response['Error']['Code']
+        error_message = e.response['Error']['Message']
+        return jsonify({'message': 'AWS error', 'error_code': error_code, 'error_message': error_message}), 500
+    except Exception as e:
+        return jsonify({'message': 'An error occurred', 'error': str(e)}), 500
 
 
 if __name__ == '__main__':
