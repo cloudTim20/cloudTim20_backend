@@ -276,10 +276,10 @@ data = {
 # print(get_from_s3_bucket('vuksan-test'))
 
 # Dodavanje fajla u s3 bucket
-# upload('vuksan-test', 'C:/Users/filip/Desktop/LOOL.txt', 'folder1/LOOL')
+# upload('user-filip', 'C:/Users/filip/Desktop/LOOLoo.txt', 'folder1/LOOL')
 
 # Brisanje fajla iz s3 bucketa
-# delete_file('vuksan-test', "LOOL")
+# delete_file('user-filip', "folder1/LOOL")
 
 # Brisanje s3 bucketa
 # s3_delete_bucket('vuksan-test')

@@ -3,7 +3,9 @@ from flask import Flask, jsonify, request
 from Validation import validate_email, validate_datetime, validate_length
 import jwt
 from datetime import datetime, timedelta
-import upload
+from upload import dynamodb_check_if_exists, dynamodb_client, upload
+from functools import wraps
+from jwt.exceptions import DecodeError
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -62,13 +64,13 @@ def login():
 
     # user = next((user for user in users if user.username == auth.username), None)
     
-    if not upload.dynamodb_check_if_exists('users', 'username', auth.username):
+    if not dynamodb_check_if_exists('users', 'username', auth.username):
         return jsonify({'message':'User not found', 'data':{}}), 401
 
     primary_key = {
         'username': {"S": auth.username}
     }
-    response = upload.dynamodb_client.get_item(
+    response = dynamodb_client.get_item(
         TableName='users',
         Key=primary_key
     )
@@ -82,6 +84,45 @@ def login():
     
     return jsonify({'message':'Invalid credentials', 'data':{}}), 401
 
+def token_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].split()[1]
+
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            request.current_user = data['username']
+        except DecodeError:
+            return jsonify({'message': 'Invalid token!'}), 401
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+@app.route('/upload', methods=['POST'])
+@token_required
+def upload_data():
+
+    user = request.current_user
+    json_data = request.get_json()
+
+    name = json_data['name']
+    file_path = json_data['file']
+    description = json_data['description']
+    tags = json_data['tags']
+
+    try:
+        upload(name, file_path, description, tags)
+        return jsonify({'message': 'File uploaded successfully!'})
+
+    except Exception as e:
+        return jsonify({'message': 'Error occurred while uploading file.', 'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
