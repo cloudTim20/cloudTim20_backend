@@ -1,21 +1,20 @@
-from flask import Flask, jsonify, request
-# from User import User
+from flask import Flask, jsonify, request, g
 from Validation import validate_email, validate_datetime, validate_length
 import jwt
-from datetime import datetime, timedelta
 from upload import *
 from functools import wraps
 from jwt.exceptions import DecodeError
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
-users = []
+
 
 @app.route('/register', methods=['POST'])
 def register():
     user = request.get_json()
 
-    #Lepimo podatke iz Json requesta
+    # Lepimo podatke iz Json requesta
     name = user['name']
     surname = user['surname']
     username = user['username']
@@ -23,7 +22,7 @@ def register():
     email = user['email']
     password = user['password']
 
-    #Validacija
+    # Validacija
     if not validate_datetime(birth_date):
         return jsonify({'message': 'Invalid datetime format for birth_date.'}), 400
 
@@ -55,17 +54,16 @@ def register():
 
     return jsonify({'message': 'User registered successfully!'})
 
+
 @app.route('/login', methods=['POST'])
 def login():
     auth = request.authorization
-    
-    if not auth or not auth.username or not auth.password:
-        return jsonify({'message':'Cloud not vertify', 'WWWWW-Authenricate':'Basic auth="Login required"'}), 401
 
-    # user = next((user for user in users if user.username == auth.username), None)
-    
+    if not auth or not auth.username or not auth.password:
+        return jsonify({'message': 'Cloud not verify', 'WWW-Authenticate': 'Basic auth="Login required"'}), 401
+
     if not dynamodb_check_if_exists('users', 'username', auth.username):
-        return jsonify({'message':'User not found', 'data':{}}), 401
+        return jsonify({'message': 'User not found', 'data': {}}), 401
 
     primary_key = {
         'username': {"S": auth.username}
@@ -78,11 +76,12 @@ def login():
     user = response['Item']
 
     if user['password']['S'] == auth.password:
-        token = jwt.encode({'username':user['username']['S'],'exp':datetime.utcnow() + timedelta(minutes=30)},
+        token = jwt.encode({'username': user['username']['S'], 'exp': datetime.utcnow() + timedelta(minutes=30)},
                            app.config['SECRET_KEY'])
-        return jsonify({'token':token})
-    
-    return jsonify({'message':'Invalid credentials', 'data':{}}), 401
+        return jsonify({'token': token})
+
+    return jsonify({'message': 'Invalid credentials', 'data': {}}), 401
+
 
 def token_required(f):
     @wraps(f)
@@ -96,7 +95,7 @@ def token_required(f):
 
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            request.current_user = data['username']
+            g.current_user = data['username']
         except DecodeError:
             return jsonify({'message': 'Invalid token!'}), 401
 
@@ -109,20 +108,24 @@ def token_required(f):
 @token_required
 def upload_data():
 
-    user = request.current_user
+    user = g.current_user
     json_data = request.get_json()
 
-    name = json_data['name']
-    file_path = json_data['file']
+    file_path = json_data['file_path']
+    file_name = json_data['file_name']
     description = json_data['description']
     tags = json_data['tags']
 
     try:
-        upload(name, file_path, description, tags)
+        if not tags:
+            upload('user-' + user, file_path, file_name, description)
+        else:
+            upload(user, file_path, file_name, description, tags)
         return jsonify({'message': 'File uploaded successfully!'})
 
     except Exception as e:
         return jsonify({'message': 'Error occurred while uploading file.', 'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
