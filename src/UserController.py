@@ -159,5 +159,24 @@ def delete_data():
         return jsonify({'message': 'Error occurred while deleting file.', 'error': str(e)}), 500
 
 
+@app.route('/create-folder', methods=['POST'])
+@token_required
+def new_folder():
+
+    user = g.current_user
+    json_data = request.get_json()
+    folder_name = json_data['folder_name']
+
+    try:
+        create_folder('user-' + user, folder_name)
+        return jsonify({'message': 'Folder created successfully!'})
+    except botocore.exceptions.ClientError as e:
+        error_code = e.response['Error']['Code']
+        error_message = e.response['Error']['Message']
+        return jsonify({'message': 'AWS error', 'error_code': error_code, 'error_message': error_message}), 500
+    except Exception as e:
+        return jsonify({'message': 'An error occurred', 'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True)
