@@ -219,29 +219,6 @@ def s3_download_file(bucket_name, file_name, destination_path):
     except Exception as e:
         print(f"Error downloading file: {e}")
 
-
-def s3_download(bucket_name, key, destination_path):
-    s3_client = boto3.client('s3')
-    s3_resource = boto3.resource('s3')
-
-    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=key)
-
-    if 'Contents' in response:
-        s3_client.download_file(bucket_name, key, destination_path)
-        print(f"File '{key}' downloaded successfully.")
-    else:
-        objects = s3_resource.Bucket(bucket_name).objects.filter(Prefix=key)
-
-        for obj in objects:
-            if obj.key[-1] == '/':
-                os.makedirs(os.path.join(destination_path, obj.key), exist_ok=True)
-            else:
-                file_key = obj.key[len(key):]  # Remove the prefix to maintain the folder structure
-                local_path = os.path.join(destination_path, file_key)
-                s3_client.download_file(bucket_name, obj.key, local_path)
-
-        print(f"Folder '{key}' downloaded successfully.")
-
 # print(get_from_dynamodb_table("proba-123-321"))
 # print(get_from_s3_bucket('proba-123-321'))
 # s3_create_bucket('final-test-123')
@@ -271,6 +248,8 @@ data = {
 }
 
 # Filip {
+
+# Dodavanje korisnika
 
 # Kreiraje dynamodb tabele
 # dynamodb_create_table('vuksan-test', 'file_name')
@@ -306,6 +285,6 @@ data = {
 # s3_delete_bucket('vuksan-test')
 
 # Preuzimanje sadrzaja
-s3_download('filipkralj-test-123', 'folder2', 'C:/Users/filip/Desktop/folder2')
+# s3_download_file('filipkralj-test-123', 'LOOL', 'C:/Users/filip/Desktop/LOOL')
 
 # }
