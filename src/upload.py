@@ -250,6 +250,22 @@ def rename_file(name, old_name, new_name):
     )
 
 
+def update_item_attribute(table_name, partition_key, attribute_name, new_value):
+    update_expression = "SET " + attribute_name + " = :value"
+    expression_attribute_values = {
+        ":value": {'S': new_value}
+    }
+
+    dynamodb_client.update_item(
+        TableName=table_name,
+        Key={
+            'file_name': {'S': partition_key}
+        },
+        UpdateExpression=update_expression,
+        ExpressionAttributeValues=expression_attribute_values
+    )
+
+# update_item_attribute('user-andrea01', 'vsem222', 'description', 'novi opis')
 # print(get_from_dynamodb_table("proba-123-321"))
 # print(get_from_s3_bucket('proba-123-321'))
 # s3_create_bucket('final-test-123')
