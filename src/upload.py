@@ -2,6 +2,7 @@ import boto3
 from dynamodb_json import json_util
 import os
 import datetime
+import botocore
 
 session = boto3.Session(region_name='eu-central-1')
 
@@ -113,26 +114,32 @@ def dynamodb_check_if_exists(table_name, key, value):
         return False
 
 
-def delete_file(username, filename):  # vrv treba da se promeni u celu putanju
+def delete_file(username, filename):
     try:
-        s3_client.delete_object(Bucket=username, Key=filename)
-        print("File deleted successfully from s3.")
-    except Exception as e:
-        print("Error deleting file from s3:", str(e))
+
+        s3_response = s3_client.head_object(Bucket=username, Key=filename)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            raise FileNotFoundError("File not found in S3 bucket.")
+        else:
+            raise Exception("Error checking file existence in S3 bucket.")
 
     try:
-        primary_key = {
-            'file_name': {
-                'S': filename
-            }
-        }
-        dynamodb_client.delete_item(
-            TableName=username,
-            Key=primary_key
-        )
-        print("Item deleted successfully from dynamodb.")
+
+        s3_client.delete_object(Bucket=username, Key=filename)
+        print("File deleted successfully from S3.")
     except Exception as e:
-        print("Error deleting item from dynamodb:", str(e))
+        raise Exception("Error deleting file from S3: " + str(e))
+
+    try:
+
+        primary_key = {'file_name': {'S': filename}}
+        dynamodb_client.delete_item(TableName=username, Key=primary_key)
+        print("Item deleted successfully from DynamoDB.")
+    except Exception as e:
+        raise Exception("Error deleting item from DynamoDB: " + str(e))
+
+    print("File and item deleted successfully.")
 
 
 def create_folder(username, folder_name):  # vrv treba da se promeni u celu putanju
@@ -263,7 +270,7 @@ def s3_download_file(bucket_name, file_name, destination_path):
 # delete_folder('vuksan-test', 'folder1')
 
 # Dobavljanje podataka iz s3 bucketa
-# print(get_from_s3_bucket('vuksan-test'))
+# print(get_from_s3_bucket('user-filip'))
 
 # Dodavanje fajla u s3 bucket
 # upload('user-filip', 'C:/Users/filip/Desktop/LOOLoo.txt', 'folder1/LOOL')

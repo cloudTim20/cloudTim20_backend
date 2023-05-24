@@ -83,6 +83,7 @@ def login():
     return jsonify({'message': 'Invalid credentials', 'data': {}}), 401
 
 
+
 def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -125,6 +126,38 @@ def upload_data():
 
     except Exception as e:
         return jsonify({'message': 'Error occurred while uploading file.', 'error': str(e)}), 500
+
+
+
+@app.route('/get', methods=['GET'])
+@token_required
+def get_data():
+
+    user = request.current_user
+
+    try:
+        data = get_from_s3_bucket('user-' + user)
+        return data
+
+    except Exception as e:
+        return jsonify({'message': 'Error occurred while getting data.', 'error': str(e)}), 500
+
+
+@app.route('/delete', methods=['DELETE'])
+@token_required
+def delete_data():
+
+    user = request.current_user
+    json_data = request.get_json()
+    file = json_data['file']
+
+    try:
+        delete_file('user-' + user, file)
+        return jsonify({'message': 'File deleted successfully!'})
+    except FileNotFoundError as e:
+        return jsonify({'message': 'File not found.', 'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'message': 'Error occurred while deleting file.', 'error': str(e)}), 500
 
 
 if __name__ == '__main__':
