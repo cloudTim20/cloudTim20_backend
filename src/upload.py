@@ -218,6 +218,38 @@ def s3_download_file(bucket_name, file_name, destination_path):
     except Exception as e:
         print(f"Error downloading file: {e}")
 
+
+def rename_file(name, old_name, new_name):
+
+    s3_client.copy_object(
+        Bucket=name,
+        CopySource={'Bucket': name, 'Key': old_name},
+        Key=new_name
+    )
+
+    s3_client.delete_object(
+        Bucket=name,
+        Key=old_name
+    )
+
+    response = dynamodb_client.get_item(
+        TableName=name,
+        Key={'file_name': {'S': old_name}}
+    )
+    item = response['Item']
+
+    dynamodb_client.delete_item(
+        TableName=name,
+        Key={'file_name': {'S': old_name}}
+    )
+
+    item['file_name'] = {'S': new_name}
+    dynamodb_client.put_item(
+        TableName=name,
+        Item=item
+    )
+
+
 # print(get_from_dynamodb_table("proba-123-321"))
 # print(get_from_s3_bucket('proba-123-321'))
 # s3_create_bucket('final-test-123')
