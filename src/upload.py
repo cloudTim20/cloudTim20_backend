@@ -336,11 +336,6 @@ def grant_album_read_permission(s3_bucket, username):
 
     user['album_read_permission'].append(s3_bucket)
     table = dynamodb_resource.Table("users")
-
-    print("user", user)
-    print("username", username)
-    print("table", table)
-
     response = table.update_item(
         Key={'username': username},
         UpdateExpression='SET album_read_permission = :album_read_permission',
@@ -361,6 +356,20 @@ def remove_content_permission(table, content_id, username):
     else:
         raise Exception("Permission for this user does not exist")
 
+
+def remove_album_permission(s3_bucket, username):
+
+    user = get_user_from_database(username)
+    if 'album_read_permission' in user and s3_bucket in user['album_read_permission']:
+        user['album_read_permission'].remove(s3_bucket)
+        table = dynamodb_resource.Table('users')
+        response = table.update_item(
+            Key={'username': username},
+            UpdateExpression='SET album_read_permission = :album_read_permission',
+            ExpressionAttributeValues={':album_read_permission': user['album_read_permission']}
+        )
+    else:
+        raise Exception("Permission for this user does not exist")
 
 def check_bucket_existence(bucket_name):
 

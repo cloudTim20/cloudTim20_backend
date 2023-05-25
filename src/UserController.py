@@ -311,12 +311,6 @@ def share_album():
     username = data['username']
     table = 'user-' + user
 
-    print(check_string_contains(album, '-'))
-    print(check_bucket_existence(album))
-    print(user)
-    print(username)
-    print(album.split('-')[1])
-
     if (check_string_contains(album, '-') is False) or check_bucket_existence(album) is False:
         return jsonify({'message': 'Album does not exist.'}), 400
 
@@ -354,7 +348,7 @@ def revoke_content_permission():
         return jsonify({'message': 'Content not found.'}), 404
 
     try:
-        remove_permission(table, content_key, username)
+        remove_content_permission(table, content_key, username)
         return jsonify({'message': 'Permission successfully removed from ' + username})
     except Exception as e:
         return jsonify({'message': str(e)}), 400
@@ -366,22 +360,21 @@ def revoke_album_permission():
 
     user = g.current_user
     data = request.get_json()
-    content_key = data['content']
+    album = data['album']
     username = data['username']
     table = 'user-' + user
 
+    if (check_string_contains(album, '-') is False) or check_bucket_existence(album) is False:
+        return jsonify({'message': 'Album does not exist.'}), 400
+
     if(user == username):
-        return jsonify({'message': 'Content for your self is already shared'}), 400
+        return jsonify({'message': 'Album for your self is already shared'}), 400
 
     if not user_exists(username):
         return jsonify({'message': 'Recipient user does not exist.'}), 400
 
-    content = get_content_from_database(table, content_key)
-    if not content:
-        return jsonify({'message': 'Content not found.'}), 404
-
     try:
-        remove_permission(table, content_key, username)
+        remove_album_permission(album, username)
         return jsonify({'message': 'Permission successfully removed from ' + username})
     except Exception as e:
         return jsonify({'message': str(e)}), 400
