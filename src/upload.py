@@ -307,36 +307,76 @@ def user_exists(username):
     return user is not None
 
 
-def grant_read_permission(table, content_id, username):
+def grant_content_read_permission(table, content_id, username):
 
     content = get_content_from_database(table, content_id)
     if content:
-        if 'read_permission' not in content:
-            content['read_permission'] = []
-        if username in content['read_permission']:
-            raise Exception(username + " already have permission")
+        if 'content_read_permission' not in content:
+            content['content_read_permission'] = []
+        if username in content['content_read_permission']:
+            raise Exception(username + " already have permission for this content")
 
-    content['read_permission'].append(username)
+    content['content_read_permission'].append(username)
     table = dynamodb_resource.Table(table)
     response = table.update_item(
         Key={'file_name': content_id},
-        UpdateExpression='SET read_permission = :read_permission',
-        ExpressionAttributeValues={':read_permission': content['read_permission']}
+        UpdateExpression='SET content_read_permission = :content_read_permission',
+        ExpressionAttributeValues={':content_read_permission': content['content_read_permission']}
     )
 
-def remove_permission(table, content_id, username):
+def grant_album_read_permission(s3_bucket, username):
+
+    user = get_user_from_database(username)
+
+    if user:
+        if 'album_read_permission' not in user:
+            user['album_read_permission'] = []
+        if s3_bucket in user['album_read_permission']:
+            raise Exception(username + " already have permission for this album")
+
+    user['album_read_permission'].append(s3_bucket)
+    table = dynamodb_resource.Table("users")
+
+    print("user", user)
+    print("username", username)
+    print("table", table)
+
+    response = table.update_item(
+        Key={'username': username},
+        UpdateExpression='SET album_read_permission = :album_read_permission',
+        ExpressionAttributeValues={':album_read_permission': user['album_read_permission']}
+    )
+
+def remove_content_permission(table, content_id, username):
 
     content = get_content_from_database(table, content_id)
-    if 'read_permission' in content and username in content['read_permission']:
-        content['read_permission'].remove(username)
+    if 'content_read_permission' in content and username in content['content_read_permission']:
+        content['content_read_permission'].remove(username)
         table = dynamodb_resource.Table(table)
         response = table.update_item(
             Key={'file_name': content_id},
-            UpdateExpression='SET read_permission = :read_permission',
-            ExpressionAttributeValues={':read_permission': content['read_permission']}
+            UpdateExpression='SET content_read_permission = :content_read_permission',
+            ExpressionAttributeValues={':content_read_permission': content['content_read_permission']}
         )
     else:
         raise Exception("Permission for this user does not exist")
+
+
+def check_bucket_existence(bucket_name):
+
+    bucket_exists = True
+    try:
+        s3_resource.meta.client.head_bucket(Bucket=bucket_name)
+    except s3.meta.client.exceptions.NoSuchBucket:
+        bucket_exists = False
+
+    return bucket_exists
+
+def check_string_contains(string, character):
+    if character in string:
+        return True
+    else:
+        return False
 
 # update_item_attribute('user-andrea01', 'vsem222', 'description', 'novi opis')
 # print(get_from_dynamodb_table("proba-123-321"))

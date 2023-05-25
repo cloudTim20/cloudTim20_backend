@@ -274,7 +274,7 @@ def update_metadata():
         return jsonify({'message': 'An error occurred', 'error': str(e)}), 500
 
 
-@app.route('/share', methods=['PUT'])
+@app.route('/share_content', methods=['PUT'])
 @token_required
 def share_content():
 
@@ -295,15 +295,47 @@ def share_content():
         return jsonify({'message': 'Content not found.'}), 404
 
     try:
-        grant_read_permission(table, content_key, username)
+        grant_content_read_permission(table, content_key, username)
         return jsonify({'message': 'Content shared successfully to ' + username})
     except Exception as e:
         return jsonify({'message': str(e)}), 400
 
 
-@app.route('/revoke', methods=['PUT'])
+@app.route('/share_album', methods=['PUT'])
 @token_required
-def revoke_permission():
+def share_album():
+
+    user = g.current_user
+    data = request.get_json()
+    album = data['album']
+    username = data['username']
+    table = 'user-' + user
+
+    print(check_string_contains(album, '-'))
+    print(check_bucket_existence(album))
+    print(user)
+    print(username)
+    print(album.split('-')[1])
+
+    if (check_string_contains(album, '-') is False) or check_bucket_existence(album) is False:
+        return jsonify({'message': 'Album does not exist.'}), 400
+
+    if (user == username) or (album.split('-')[1] == username):
+        return jsonify({'message': 'Album for your self is already shared'}), 400
+
+    if not user_exists(username):
+        return jsonify({'message': 'Recipient user does not exist.'}), 400
+
+    try:
+        grant_album_read_permission(album, username)
+        return jsonify({'message': 'Album shared successfully to ' + username})
+    except Exception as e:
+        return jsonify({'message': str(e)}), 400
+
+
+@app.route('/revoke_content', methods=['PUT'])
+@token_required
+def revoke_content_permission():
 
     user = g.current_user
     data = request.get_json()
@@ -327,6 +359,32 @@ def revoke_permission():
     except Exception as e:
         return jsonify({'message': str(e)}), 400
 
+
+@app.route('/revoke_album', methods=['PUT'])
+@token_required
+def revoke_album_permission():
+
+    user = g.current_user
+    data = request.get_json()
+    content_key = data['content']
+    username = data['username']
+    table = 'user-' + user
+
+    if(user == username):
+        return jsonify({'message': 'Content for your self is already shared'}), 400
+
+    if not user_exists(username):
+        return jsonify({'message': 'Recipient user does not exist.'}), 400
+
+    content = get_content_from_database(table, content_key)
+    if not content:
+        return jsonify({'message': 'Content not found.'}), 404
+
+    try:
+        remove_permission(table, content_key, username)
+        return jsonify({'message': 'Permission successfully removed from ' + username})
+    except Exception as e:
+        return jsonify({'message': str(e)}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
