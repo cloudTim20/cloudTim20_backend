@@ -1,9 +1,7 @@
 from flask import Flask, jsonify, request, g
 from Validation import validate_email, validate_datetime, validate_length
 import jwt
-from datetime import datetime, timedelta
 from upload import *
-from datetime import datetime, timedelta
 from functools import wraps
 from jwt.exceptions import DecodeError
 from datetime import datetime, timedelta
@@ -148,7 +146,7 @@ def get_data():
 @token_required
 def modify_data():
 
-    user = request.current_user
+    user = g.current_user
 
     try:
         data = get_from_s3_bucket('user-' + user)
@@ -284,7 +282,7 @@ def share_content():
     username = data['username']
     table = 'user-' + user
 
-    if(user == username):
+    if user == username:
         return jsonify({'message': 'Content for your self is already shared'}), 400
 
     if not user_exists(username):
@@ -337,7 +335,7 @@ def revoke_content_permission():
     username = data['username']
     table = 'user-' + user
 
-    if(user == username):
+    if user == username:
         return jsonify({'message': 'Content for your self is already shared'}), 400
 
     if not user_exists(username):
@@ -367,7 +365,7 @@ def revoke_album_permission():
     if (check_string_contains(album, '-') is False) or check_bucket_existence(album) is False:
         return jsonify({'message': 'Album does not exist.'}), 400
 
-    if(user == username):
+    if user == username:
         return jsonify({'message': 'Album for your self is already shared'}), 400
 
     if not user_exists(username):
@@ -378,6 +376,7 @@ def revoke_album_permission():
         return jsonify({'message': 'Permission successfully removed from ' + username})
     except Exception as e:
         return jsonify({'message': str(e)}), 400
+
 
 if __name__ == '__main__':
     app.run(debug=True)
