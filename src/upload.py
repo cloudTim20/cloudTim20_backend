@@ -376,7 +376,7 @@ def check_bucket_existence(bucket_name):
     bucket_exists = True
     try:
         s3_resource.meta.client.head_bucket(Bucket=bucket_name)
-    except s3.meta.client.exceptions.NoSuchBucket:
+    except s3_client.meta.client.exceptions.NoSuchBucket:
         bucket_exists = False
 
     return bucket_exists
