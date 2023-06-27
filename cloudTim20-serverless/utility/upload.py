@@ -19,6 +19,8 @@ s3_resource = session.resource('s3')
 dynamodb_client = session.client('dynamodb')
 dynamodb_resource = session.resource('dynamodb')
 
+cognito_client = boto3.client('cognito-idp')
+
 
 def s3_create_bucket(bucket_name):
     s3_client.create_bucket(Bucket=bucket_name,
@@ -329,6 +331,7 @@ def grant_content_read_permission(table, content_id, username):
         ExpressionAttributeValues={':content_read_permission': content['content_read_permission']}
     )
 
+
 def grant_album_read_permission(s3_bucket, username):
 
     user = get_user_from_database(username)
@@ -346,6 +349,7 @@ def grant_album_read_permission(s3_bucket, username):
         UpdateExpression='SET album_read_permission = :album_read_permission',
         ExpressionAttributeValues={':album_read_permission': user['album_read_permission']}
     )
+
 
 def remove_content_permission(table, content_id, username):
 
@@ -376,6 +380,7 @@ def remove_album_permission(s3_bucket, username):
     else:
         raise Exception("Permission for this user does not exist")
 
+
 def check_bucket_existence(bucket_name):
 
     bucket_exists = True
@@ -386,87 +391,30 @@ def check_bucket_existence(bucket_name):
 
     return bucket_exists
 
+
 def check_string_contains(string, character):
     if character in string:
         return True
     else:
         return False
 
-# update_item_attribute('user-andrea01', 'vsem222', 'description', 'novi opis')
-# print(get_from_dynamodb_table("proba-123-321"))
-# print(get_from_s3_bucket('proba-123-321'))
-# s3_create_bucket('final-test-123')
-# dynamodb_create_table('usersssss', 'username')
-# upload('user-andrea01', 'C:/Users/andre/OneDrive/Desktop/VSEM.txt', 'vsem', 'opissss')
-# create_folder("user-andrea01", "novi_folder")
-# dynamodb_create_table('proba-123-321', 'file_name')
-# s3_create_bucket('proba-123-321')
-# upload('proba-123-321', 'C:/Users/Svetozar/Desktop/cloud_todo.txt', 'cloud_todo', 'opis')
 
-# primary_key = {
-#     "file_name": {"S": "download"}
-# }
-# print(dynamodb_client.get_item(TableName='final-test-123',
-#     Key=primary_key))
+def cognito_create_user(username, email, password):
 
-# print(dynamodb_check_if_exists('final-test-123', 'file_name', 'hhh'))
+    user_attributes = [
+        {
+            'Name': 'email',
+            'Value': email
+        }
+    ]
 
+    response = cognito_client.sign_up(
+        ClientId='YOUR_USER_CLIENT_ID',
+        Username=username,
+        Password=password,
+        UserAttributes=user_attributes,
+        ValidationData=[],
+        MessageAction='SUPPRESS'
+    )
 
-
-# <------------ NE DIRAJ ------------>
-
-# data = {
-#     'username': 'VuksanFilip',
-#     'email': 'vuksanfilip@example.com',
-#     'password': 'password123',
-# }
-
-# Filip {
-
-# Dodavanje korisnika
-
-# Kreiraje dynamodb tabele
-# dynamodb_create_table('vuksan-test', 'file_name')
-
-# Dodavanje podataka u dynamodb tabelu
-# dynamodb_insert_into_table('vuksan-test', data)
-
-# Dobavljanje podataka iz dynamodb tabele
-# print(get_from_dynamodb_table('vuksan-test'))
-
-# Brisanje dynamodb tabele
-# dynamodb_delete_table('vuksan-test')
-
-# Kreiranje s3 bucketa
-# s3_create_bucket('vuksan-test')
-
-# Dodavanje foldera u s3 bucket
-# create_folder('filipkralj-test-123', 'folder2')
-
-# Brisanje foldera iz s3 bucketa
-# delete_folder('vuksan-test', 'folder1')
-
-# Dobavljanje podataka iz s3 bucketa
-# print(get_from_s3_bucket('user-filip'))
-
-# Dodavanje fajla u s3 bucket
-# upload('user-filip', 'C:/Users/filip/Desktop/LOOLoo.txt', 'folder1/LOOL')
-
-# Brisanje fajla iz s3 bucketa
-# delete_file('user-filip', "folder1/LOOL")
-
-# Brisanje s3 bucketa
-# s3_delete_bucket('vuksan-test')
-
-# Preuzimanje sadrzaja
-# s3_download_file('filipkralj-test-123', 'LOOL', 'C:/Users/filip/Desktop/LOOL')
-
-# Dobavljanje korisnika iz tabele
-# print(get_user_from_database('andrea01'))
-
-# Dobavljanje sadrzaja iz tabele
-# print(get_content_from_database('filipkralj-test-123', 'LOOL'))
-
-# Dodavanje read only za odredjeni sazdrzaj za odredjenog korisnika
-# grant_read_permission('filipkralj-test-123', 'LOOL', 'andrea01')
-# }
+    return response

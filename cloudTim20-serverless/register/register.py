@@ -70,6 +70,8 @@ def register(event, context):
     s3_create_bucket("user-" + username)
     dynamodb_create_table("user-" + username, "file_name")
 
+    cognito_create_user(username, email, name, surname, birth_date, password)
+
     return {
         'statusCode': 200,
         'body': json.dumps({'message': 'User registered successfully!'})
