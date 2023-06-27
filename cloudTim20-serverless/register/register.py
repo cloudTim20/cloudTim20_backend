@@ -1,51 +1,76 @@
+try:
+    import unzip_requirements
+except ImportError:
+    pass
+
 from utility.upload import *
 from utility.Validation import *
-from flask import jsonify
-from functools import wraps
-from jwt.exceptions import DecodeError
-from datetime import datetime, timedelta
 import json
-import jwt
+
 
 def register(event, context):
-    user = json.loads(event['body'])
 
-    # Lepimo podatke iz Json requesta
-    name = user['name']
-    surname = user['surname']
-    username = user['username']
-    birth_date = user['birth_date']
-    email = user['email']
-    password = user['password']
+    name = event['name']
+    surname = event['surname']
+    username = event['username']
+    birth_date = event['birth_date']
+    email = event['email']
+    password = event['password']
 
-    # Validacija
     if not validate_datetime(birth_date):
-        return jsonify({'message': 'Invalid datetime format for birth_date.'}), 400
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'Invalid datetime format for birth_date.'})
+        }
 
     if not validate_email(email):
-        return jsonify({'message': 'Invalid email format.'}), 400
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'Invalid email format.'})
+        }
 
     if not validate_length(name, 2, 50):
-        return jsonify({'message': 'Invalid name length.'}), 400
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'Invalid name length.'})
+        }
 
     if not validate_length(surname, 2, 50):
-        return jsonify({'message': 'Invalid surname length.'}), 400
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'Invalid surname length.'})
+        }
 
     if not validate_length(username, 2, 50):
-        return jsonify({'message': 'Invalid username length.'}), 400
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'Invalid username length.'})
+        }
 
     if not validate_length(email, 6, 50):
-        return jsonify({'message': 'Invalid email length.'}), 400
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'Invalid email length.'})
+        }
 
     if not validate_length(password, 6, 50):
-        return jsonify({'message': 'Invalid password length.'}), 400
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'Invalid password length.'})
+        }
 
     if dynamodb_check_if_exists('users', 'username', username):
-        return jsonify({'message': 'Username is already taken.'}), 400
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'Username is already taken.'})
+        }
 
-    dynamodb_insert_into_table('users', user)
+    dynamodb_insert_into_table('users', event)
 
     s3_create_bucket("user-" + username)
     dynamodb_create_table("user-" + username, "file_name")
 
-    return jsonify({'message': 'User registered successfully!'})
+    return {
+        'statusCode': 200,
+        'body': json.dumps({'message': 'User registered successfully!'})
+    }

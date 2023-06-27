@@ -1,5 +1,12 @@
 service: cloudTim20-serverless-beck
 
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    zip: true
+
 frameworkVersion: '3'
 
 provider:
@@ -9,6 +16,28 @@ provider:
   region: eu-central-1
   memorySize: 128
   timeout: 10
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+#        - dynamodb:GetItem
+#        - dynamodb:DescribeTable
+#        - dynamodb:Query
+#        - dynamodb:Scan
+#        - dynamodb:PutItem
+#        - dynamodb:UpdateItem
+#        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:eu-central-1:881974833390:table/*"
+    - Effect: Allow
+      Action:
+        - s3:*
+#        - s3:PutObject
+#        - s3:GetObject
+#        - s3:ListBucket
+      Resource:
+        - "arn:aws:s3:::*"
+        - "arn:aws:s3:::*/*"
+
 
 package:
     individually: True
@@ -22,228 +51,238 @@ functions:
     handler: register/register.register
 
     package:
-      include: 'register/**'
+      include:
+        - 'register/**'
 
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - POST
-
-  login:
-    handler: login/login.login
-
-    package:
-      include: 'login/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - POST
-
-  upload_data:
-    handler: uploadData/upload_data.upload_data
-
-    package:
-      include: 'uploadData/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - POST
-
-  get_data:
-    handler: getData.get_data.get_data
-
-    package:
-      include: 'getData/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - GET  
-
-  modify_data:
-    handler: modifyData.modify_data.modify_data
-
-    package:
-      include: 'modifyData/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - PUT  
-
-  delete_data:
-    handler: deleteData.delete_data.delete_data
-
-    package:
-      include: 'deleteData/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - DELETE  
-
-  new_folder:
-    handler: newFolder.new_folder.new_folder
-
-    package:
-      include: 'newFolder/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - POST  
-
-  delete_a_folder:
-    handler: deleteFolder.delete_folder.delete_a_folder
-
-    package:
-      include: 'deleteFolder/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - DELETE  
-
-  download_file:
-    handler: downloadFile.download_file.download_file
-
-    package:
-      include: 'downloadFile/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - GET  
-
-  rename:
-    handler: rename.rename.rename
-
-    package:
-      include: 'rename/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - PUT  
-
-  update_metadata:
-    handler: updateMetadata.update_metadata.update_metadata
-
-    package:
-      include: 'updateMetadata/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - PUT  
-
-  share_content:
-    handler: shareContent.share_content.share_content
-
-    package:
-      include: 'shareContent/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - PUT  
-
-  share_album:
-    handler: shareAlbum.share_album.share_album
-
-    package:
-      include: 'shareAlbum/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - PUT  
-
-  revoke_content_permission:
-    handler: revokeContentPermission.revoke_content_permission.revoke_content_permission
-
-    package:
-      include: 'revokeContentPermission/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - PUT  
-
-  revoke_album_permission:
-    handler: revokeAlbumPermission.revoke_album_permission.revoke_album_permission
-
-    package:
-      include: 'revokeAlbumPermission/**'
-
-    url:
-      cors:
-        allowedOrigins:
-          - '*'
-        allowedHeaders:
-          - Authorization
-        allowedMethods:
-          - PUT  
+    events:
+      - http:
+          path: register
+          method: post
+          cors: true
 
 
-  
+#  login:
+#    handler: login/login.login
+#
+#    package:
+#      include: 'login/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - POST
+#
+#  upload_data:
+#    handler: uploadData/upload_data.upload_data
+#
+#    package:
+#      include: 'uploadData/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - POST
+#
+#  get_data:
+#    handler: getData.get_data.get_data
+#
+#    package:
+#      include: 'getData/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - GET
+#
+#  modify_data:
+#    handler: modifyData.modify_data.modify_data
+#
+#    package:
+#      include: 'modifyData/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - PUT
+#
+#  delete_data:
+#    handler: deleteData.delete_data.delete_data
+#
+#    package:
+#      include: 'deleteData/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - DELETE
+#
+#  new_folder:
+#    handler: newFolder.new_folder.new_folder
+#
+#    package:
+#      include: 'newFolder/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - POST
+#
+#  delete_a_folder:
+#    handler: deleteFolder.delete_folder.delete_a_folder
+#
+#    package:
+#      include: 'deleteFolder/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - DELETE
+#
+#  download_file:
+#    handler: downloadFile.download_file.download_file
+#
+#    package:
+#      include: 'downloadFile/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - GET
+#
+#  rename:
+#    handler: rename.rename.rename
+#
+#    package:
+#      include: 'rename/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - PUT
+#
+#  update_metadata:
+#    handler: updateMetadata.update_metadata.update_metadata
+#
+#    package:
+#      include: 'updateMetadata/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - PUT
+#
+#  share_content:
+#    handler: shareContent.share_content.share_content
+#
+#    package:
+#      include: 'shareContent/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - PUT
+#
+#  share_album:
+#    handler: shareAlbum.share_album.share_album
+#
+#    package:
+#      include: 'shareAlbum/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - PUT
+#
+#  revoke_content_permission:
+#    handler: revokeContentPermission.revoke_content_permission.revoke_content_permission
+#
+#    package:
+#      include: 'revokeContentPermission/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - PUT
+#
+#  revoke_album_permission:
+#    handler: revokeAlbumPermission.revoke_album_permission.revoke_album_permission
+#
+#    package:
+#      include: 'revokeAlbumPermission/**'
+#
+#    url:
+#      cors:
+#        allowedOrigins:
+#          - '*'
+#        allowedHeaders:
+#          - Authorization
+#        allowedMethods:
+#          - PUT
 
-
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: users
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5

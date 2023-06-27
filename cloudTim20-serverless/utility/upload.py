@@ -1,3 +1,8 @@
+try:
+    import unzip_requirements
+except ImportError:
+    pass
+
 import boto3
 from dynamodb_json import json_util
 import os

@@ -1,0 +1,8 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Datasource local storage ignored files
+/../../../../../../../../../../:\Users\Svetozar\Desktop\DRUGI SEMESTAR\Računarstvo u oblaku\Projekat\cloudTim20_backend\cloudTim20-serverless\.idea/dataSources/
+/dataSources.local.xml
+# Editor-based HTTP Client requests
+/httpRequests/
