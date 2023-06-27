@@ -70,7 +70,7 @@ def register(event, context):
     s3_create_bucket("user-" + username)
     dynamodb_create_table("user-" + username, "file_name")
 
-    cognito_create_user(username, email, name, surname, birth_date, password)
+    cognito_create_user(email, password)
 
     return {
         'statusCode': 200,

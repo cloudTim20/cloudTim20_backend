@@ -399,8 +399,7 @@ def check_string_contains(string, character):
         return False
 
 
-def cognito_create_user(username, email, password):
-
+def cognito_create_user(email, password):
     user_attributes = [
         {
             'Name': 'email',
@@ -409,12 +408,14 @@ def cognito_create_user(username, email, password):
     ]
 
     response = cognito_client.sign_up(
-        ClientId='YOUR_USER_CLIENT_ID',
-        Username=username,
+        ClientId='14sgq6c40ig4h8if1pf07l92e8',
+        Username=email,
         Password=password,
         UserAttributes=user_attributes,
-        ValidationData=[],
-        MessageAction='SUPPRESS'
+        ValidationData=[]
     )
 
     return response
+
+
+

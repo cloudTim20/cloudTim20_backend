@@ -300,5 +300,3 @@ resources:
           Ref: UserPool
         AccessTokenValidity: 5
         IdTokenValidity: 5
-        ExplicitAuthFlows:
-          - ALLOW_USER_SRP_AUTH
