@@ -11,10 +11,6 @@ def upload_data(event, context):
 
     email = verify_cognito_token(token)
     aws_name = email.split('@')
-    # return {
-    #     'statusCode': 200,
-    #     'body': json.dumps({'message': decoded_token})
-    # }
 
     try:
         if not tags:
