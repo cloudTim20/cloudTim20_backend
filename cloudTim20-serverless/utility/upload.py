@@ -1,5 +1,3 @@
-import jwt
-
 try:
     import unzip_requirements
 except ImportError:
@@ -11,7 +9,7 @@ import os
 import datetime
 import botocore
 import botocore.exceptions
-
+import jwt
 
 session = boto3.Session(region_name='eu-central-1')
 
@@ -186,7 +184,7 @@ def delete_folder(username, folder_name):  # treba da se promeni u celu putanju,
             Delete=delete_keys
         )
 
-        delete_file(username, folder_name+'/')
+        delete_file(username, folder_name + '/')
 
 
 def get_from_dynamodb_table(table_name):
@@ -229,7 +227,6 @@ def s3_download_file(bucket_name, file_name, destination_path):
 
 
 def rename_file(name, old_name, new_name):
-
     s3_client.copy_object(
         Bucket=name,
         CopySource={'Bucket': name, 'Key': old_name},
@@ -276,7 +273,6 @@ def update_item_attribute(table_name, partition_key, attribute_name, new_value):
 
 
 def get_content_from_database(table_name, content_id):
-
     try:
         table = dynamodb_resource.Table(table_name)
 
@@ -293,7 +289,6 @@ def get_content_from_database(table_name, content_id):
 
 
 def get_user_from_database(username):
-
     table_name = 'users'
 
     try:
@@ -317,7 +312,6 @@ def user_exists(username):
 
 
 def grant_content_read_permission(table, content_id, username):
-
     content = get_content_from_database(table, content_id)
     if content:
         if 'content_read_permission' not in content:
@@ -335,7 +329,6 @@ def grant_content_read_permission(table, content_id, username):
 
 
 def grant_album_read_permission(s3_bucket, username):
-
     user = get_user_from_database(username)
 
     if user:
@@ -354,7 +347,6 @@ def grant_album_read_permission(s3_bucket, username):
 
 
 def remove_content_permission(table, content_id, username):
-
     content = get_content_from_database(table, content_id)
     if 'content_read_permission' in content and username in content['content_read_permission']:
         content['content_read_permission'].remove(username)
@@ -369,7 +361,6 @@ def remove_content_permission(table, content_id, username):
 
 
 def remove_album_permission(s3_bucket, username):
-
     user = get_user_from_database(username)
     if 'album_read_permission' in user and s3_bucket in user['album_read_permission']:
         user['album_read_permission'].remove(s3_bucket)
@@ -384,7 +375,6 @@ def remove_album_permission(s3_bucket, username):
 
 
 def check_bucket_existence(bucket_name):
-
     bucket_exists = True
     try:
         s3_resource.meta.client.head_bucket(Bucket=bucket_name)
@@ -436,3 +426,33 @@ def cognito_login(username, password):
     )
 
     return response['AuthenticationResult']['IdToken']
+
+
+# def verify_token(token):
+#     # try:
+#     #     keys = cognito_client.get_user_pool_keys(UserPoolId='eu-central-1_qkRZu0phR')['Keys']
+#     #     decoded_token = jwt.decode(token, keys, algorithms=['RS256'], options={'verify_signature': True})
+#     #     email = decoded_token['email']
+#     #     return email
+#     # except:
+#     #     return None
+#     keys = cognito_client.get_user_pool_keys(UserPoolId='eu-central-1_qkRZu0phR')['Keys']
+#     decoded_token = jwt.decode(token, keys, algorithms=['RS256'], options={'verify_signature': True})
+#     email = decoded_token['email']
+#     return email
+
+
+def verify_cognito_token(token):
+    try:
+        decoded_token = jwt.decode(token, algorithms=['RS256'], options={"verify_signature": False})
+
+        if 'iss' not in decoded_token or decoded_token['iss'] != 'https://cognito-idp.eu-central-1.amazonaws.com/eu' \
+                                                                 '-central-1_qkRZu0phR':
+            return None
+
+        email = decoded_token['email']
+        return email
+
+    except Exception:
+        return None
+

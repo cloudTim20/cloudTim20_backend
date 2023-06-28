@@ -1,24 +1,27 @@
 from utility.upload import *
-from utility.Validation import *
-from flask import jsonify, g
-from functools import wraps
-from jwt.exceptions import DecodeError
-from datetime import datetime, timedelta
 import json
-import jwt
 
 
 def get_data(event, context):
 
-    user = g.current_user
+    token = event['token']
+
+    email = verify_cognito_token(token)
+    aws_name = email.split('@')
 
     try:
         # data_s3 = get_from_s3_bucket('user-' + user)
-        data_dynamodb = get_from_dynamodb_table('user-' + user)
-        return data_dynamodb
+        data_dynamodb = get_from_dynamodb_table('user-' + aws_name[0])
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'data': data_dynamodb})
+        }
 
     except Exception as e:
-        return jsonify({'message': 'Error occurred while getting data.', 'error': str(e)}), 500
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'message': 'Error occurred while getting data.', 'error': str(e)})
+        }
 
 
 

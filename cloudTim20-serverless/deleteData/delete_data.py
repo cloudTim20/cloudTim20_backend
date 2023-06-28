@@ -1,23 +1,27 @@
 from utility.upload import *
-from utility.Validation import *
-from flask import jsonify, g
-from functools import wraps
-from jwt.exceptions import DecodeError
-from datetime import datetime, timedelta
 import json
-import jwt
 
 
 def delete_data(event, context):
+    token = event['token']
+    file = event['file']
 
-    user = g.current_user
-    json_data = json.load(event['body'])
-    file = json_data['file']
+    email = verify_cognito_token(token)
+    aws_name = email.split('@')
 
     try:
-        delete_file("user-" + user, file)
-        return jsonify({'message': 'File deleted successfully!'})
+        delete_file("user-" + aws_name[0], file)
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'message': 'File deleted successfully!'})
+        }
     except FileNotFoundError as e:
-        return jsonify({'message': 'File not found.', 'error': str(e)}), 404
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'message': 'File not found.', 'error': str(e)})
+        }
     except Exception as e:
-        return jsonify({'message': 'Error occurred while deleting file.', 'error': str(e)}), 500
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'message': 'Error occurred while deleting file.', 'error': str(e)})
+        }

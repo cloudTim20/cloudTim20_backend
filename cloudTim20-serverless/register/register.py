@@ -67,8 +67,10 @@ def register(event, context):
 
     dynamodb_insert_into_table('users', event)
 
-    s3_create_bucket("user-" + username)
-    dynamodb_create_table("user-" + username, "file_name")
+    aws_name = email.split('@')
+
+    s3_create_bucket("user-" + aws_name[0])
+    dynamodb_create_table("user-" + aws_name[0], "file_name")
 
     cognito_create_user(email, password)
 

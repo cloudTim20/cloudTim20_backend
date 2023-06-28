@@ -68,37 +68,29 @@ functions:
           method: post
           cors: true
 
+  upload_data:
+    handler: uploadData/upload_data.upload_data
 
-#
-#  upload_data:
-#    handler: uploadData/upload_data.upload_data
-#
-#    package:
-#      include: 'uploadData/**'
-#
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - POST
-#
+    package:
+      include:
+        - 'uploadData/**'
+    events:
+      - http:
+          path: upload_data
+          method: post
+          cors: true
+
 #  get_data:
 #    handler: getData.get_data.get_data
 #
 #    package:
 #      include: 'getData/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - GET
+#    events:
+#      - http:
+#          path: get_data
+#          method: get
+#          cors: true
 #
 #  modify_data:
 #    handler: modifyData.modify_data.modify_data
@@ -106,14 +98,11 @@ functions:
 #    package:
 #      include: 'modifyData/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - PUT
+#    events:
+#      - http:
+#          path: modify_data
+#          method: put
+#          cors: true
 #
 #  delete_data:
 #    handler: deleteData.delete_data.delete_data
@@ -121,14 +110,11 @@ functions:
 #    package:
 #      include: 'deleteData/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - DELETE
+#    events:
+#      - http:
+#          path: delete_data
+#          method: delete
+#          cors: true
 #
 #  new_folder:
 #    handler: newFolder.new_folder.new_folder
@@ -136,14 +122,11 @@ functions:
 #    package:
 #      include: 'newFolder/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - POST
+#    events:
+#      - http:
+#          path: new_folder
+#          method: post
+#          cors: true
 #
 #  delete_a_folder:
 #    handler: deleteFolder.delete_folder.delete_a_folder
@@ -151,14 +134,11 @@ functions:
 #    package:
 #      include: 'deleteFolder/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - DELETE
+#    events:
+#      - http:
+#          path: delete_folder
+#          method: delete
+#          cors: true
 #
 #  download_file:
 #    handler: downloadFile.download_file.download_file
@@ -166,14 +146,12 @@ functions:
 #    package:
 #      include: 'downloadFile/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - GET
+#
+#    events:
+#      - http:
+#          path: download_file
+#          method: get
+#          cors: true
 #
 #  rename:
 #    handler: rename.rename.rename
@@ -181,14 +159,11 @@ functions:
 #    package:
 #      include: 'rename/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - PUT
+#    events:
+#      - http:
+#          path: rename
+#          method: put
+#          cors: true
 #
 #  update_metadata:
 #    handler: updateMetadata.update_metadata.update_metadata
@@ -196,14 +171,11 @@ functions:
 #    package:
 #      include: 'updateMetadata/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - PUT
+#    events:
+#      - http:
+#          path: update_metadata
+#          method: put
+#          cors: true
 #
 #  share_content:
 #    handler: shareContent.share_content.share_content
@@ -211,14 +183,11 @@ functions:
 #    package:
 #      include: 'shareContent/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - PUT
+#    events:
+#      - http:
+#          path: share_content
+#          method: put
+#          cors: true
 #
 #  share_album:
 #    handler: shareAlbum.share_album.share_album
@@ -226,14 +195,11 @@ functions:
 #    package:
 #      include: 'shareAlbum/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - PUT
+#    events:
+#      - http:
+#          path: share_album
+#          method: put
+#          cors: true
 #
 #  revoke_content_permission:
 #    handler: revokeContentPermission.revoke_content_permission.revoke_content_permission
@@ -241,14 +207,11 @@ functions:
 #    package:
 #      include: 'revokeContentPermission/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - PUT
+#    events:
+#      - http:
+#          path: revoke_content_permission
+#          method: put
+#          cors: true
 #
 #  revoke_album_permission:
 #    handler: revokeAlbumPermission.revoke_album_permission.revoke_album_permission
@@ -256,14 +219,11 @@ functions:
 #    package:
 #      include: 'revokeAlbumPermission/**'
 #
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - PUT
+#    events:
+#      - http:
+#          path: revoke_album_permission
+#          method: put
+#          cors: true
 
 resources:
   Resources:

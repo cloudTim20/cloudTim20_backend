@@ -1,28 +1,33 @@
 from utility.upload import *
-from utility.Validation import *
-from flask import jsonify, g
-from functools import wraps
-from jwt.exceptions import DecodeError
-from datetime import datetime, timedelta
 import json
-import jwt
+
 
 def upload_data(event, context):
+    token = event['token']
+    file_path = event['file_path']
+    file_name = event['file_name']
+    description = event['description']
+    tags = event['tags']
 
-    user = g.current_user
-    json_data = json.loads(event['body'])
-
-    file_path = json_data['file_path']
-    file_name = json_data['file_name']
-    description = json_data['description']
-    tags = json_data['tags']
+    email = verify_cognito_token(token)
+    aws_name = email.split('@')
+    # return {
+    #     'statusCode': 200,
+    #     'body': json.dumps({'message': decoded_token})
+    # }
 
     try:
         if not tags:
-            upload('user-' + user, file_path, file_name, description)
+            upload('user-' + aws_name[0], file_path, file_name, description)
         else:
-            upload(user, file_path, file_name, description, tags)
-        return jsonify({'message': 'File uploaded successfully!'})
+            upload('user-' + aws_name[0], file_path, file_name, description, tags)
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'message': 'File uploaded successfully!'})
+        }
 
     except Exception as e:
-        return jsonify({'message': 'Error occurred while uploading file.', 'error': str(e)}), 500
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'message': 'Error occurred while uploading file.', 'error': str(e)})
+        }

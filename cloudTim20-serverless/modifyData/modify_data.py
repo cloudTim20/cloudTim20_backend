@@ -1,21 +1,22 @@
 from utility.upload import *
-from utility.Validation import *
-from flask import jsonify, g
-from functools import wraps
-from jwt.exceptions import DecodeError
-from datetime import datetime, timedelta
 import json
-import jwt
-
 
 
 def modify_data(event, context):
+    token = event['token']
 
-    user = g.current_user
+    email = verify_cognito_token(token)
+    aws_name = email.split('@')
 
     try:
-        data = get_from_s3_bucket('user-' + user)
-        return data
+        data = get_from_s3_bucket('user-' + aws_name[0])
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'message': 'Data successfully modified!'})
+        }
 
     except Exception as e:
-        return jsonify({'message': 'Error occurred while getting data.', 'error': str(e)}), 500
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'message': 'Error occurred while getting data.', 'error': str(e)})
+        }
