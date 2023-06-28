@@ -418,4 +418,15 @@ def cognito_create_user(email, password):
     return response
 
 
+def cognito_login(username, password):
+    response = cognito_client.initiate_auth(
+        ClientId='14sgq6c40ig4h8if1pf07l92e8',
+        AuthFlow='USER_SRP_AUTH',
+        AuthParameters={
+            'USERNAME': username,
+            'SRP_A': password
+        }
+    )
+
+    return response['AuthenticationResult']['IdToken']
 

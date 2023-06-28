@@ -34,11 +34,10 @@ provider:
 
 
 package:
-    individually: True
-    patterns:
-          - '!**/**'
-          - 'utility/**'
-
+  individually: True
+  patterns:
+    - '!**/**'
+    - 'utility/**'
 
 functions:
   register:
@@ -54,21 +53,20 @@ functions:
           method: post
           cors: true
 
+  login:
+    handler: login/login.login
 
-#  login:
-#    handler: login/login.login
-#
-#    package:
-#      include: 'login/**'
-#
-#    url:
-#      cors:
-#        allowedOrigins:
-#          - '*'
-#        allowedHeaders:
-#          - Authorization
-#        allowedMethods:
-#          - POST
+    package:
+      include:
+        - 'login/**'
+
+    events:
+      - http:
+          path: login
+          method: post
+          cors: true
+
+
 #
 #  upload_data:
 #    handler: uploadData/upload_data.upload_data
