@@ -1,3 +1,5 @@
+import jwt
+
 try:
     import unzip_requirements
 except ImportError:
@@ -408,7 +410,7 @@ def cognito_create_user(email, password):
     ]
 
     response = cognito_client.sign_up(
-        ClientId='14sgq6c40ig4h8if1pf07l92e8',
+        ClientId='7msu6lnuqordrqin0oktco1ih4',
         Username=email,
         Password=password,
         UserAttributes=user_attributes,
@@ -416,7 +418,7 @@ def cognito_create_user(email, password):
     )
 
     cognito_client.admin_confirm_sign_up(
-        UserPoolId='eu-central-1_Hxi28QRyK',
+        UserPoolId='eu-central-1_qkRZu0phR',
         Username=email
     )
 
@@ -425,7 +427,7 @@ def cognito_create_user(email, password):
 
 def cognito_login(username, password):
     response = cognito_client.initiate_auth(
-        ClientId='14sgq6c40ig4h8if1pf07l92e8',
+        ClientId='7msu6lnuqordrqin0oktco1ih4',
         AuthFlow='USER_PASSWORD_AUTH',
         AuthParameters={
             'USERNAME': username,
@@ -434,4 +436,3 @@ def cognito_login(username, password):
     )
 
     return response['AuthenticationResult']['IdToken']
-
