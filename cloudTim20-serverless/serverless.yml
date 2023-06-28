@@ -38,6 +38,9 @@ package:
   patterns:
     - '!**/**'
     - 'utility/**'
+    - 'requirements.txt'
+    - 'unzip_requirements.py'
+    - '.requirements.zip'
 
 functions:
   register:
@@ -59,7 +62,6 @@ functions:
     package:
       include:
         - 'login/**'
-
     events:
       - http:
           path: login
@@ -298,3 +300,8 @@ resources:
           Ref: UserPool
         AccessTokenValidity: 5
         IdTokenValidity: 5
+        ExplicitAuthFlows:
+          - ALLOW_CUSTOM_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_USER_SRP_AUTH

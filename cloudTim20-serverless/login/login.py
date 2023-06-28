@@ -1,14 +1,9 @@
-try:
-    import unzip_requirements
-except ImportError:
-    pass
-
 from utility.upload import *
 import json
 
 
 def login(event, context):
-    username = event['username']
+    username = event['email']
     password = event['password']
 
     try:

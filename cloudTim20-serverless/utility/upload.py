@@ -415,16 +415,21 @@ def cognito_create_user(email, password):
         ValidationData=[]
     )
 
+    cognito_client.admin_confirm_sign_up(
+        UserPoolId='eu-central-1_Hxi28QRyK',
+        Username=email
+    )
+
     return response
 
 
 def cognito_login(username, password):
     response = cognito_client.initiate_auth(
         ClientId='14sgq6c40ig4h8if1pf07l92e8',
-        AuthFlow='USER_SRP_AUTH',
+        AuthFlow='USER_PASSWORD_AUTH',
         AuthParameters={
             'USERNAME': username,
-            'SRP_A': password
+            'PASSWORD': password
         }
     )
 
